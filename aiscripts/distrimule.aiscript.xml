@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aiscript name="DistriMuleInfectedm" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="3">
+
+    <order id="DistriMuleInfectedm" name="DistriMule (infectedm)" description="Distribution Mule (infectedm)" category="trade" infinite="true">
+        <params>
+            <param name="sourceStation" required="true" type="object" text="Home Station">
+                <input_param name="class" value="[class.station]" />
+                <input_param name="owner" value="this.ship.trueowner" />
+            </param>
+            <param name="targetsForAllShips" type="list" default="[]" text="Targets for all ships">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station]" />
+                <input_param name="owner" value="this.ship.trueowner" />
+            </param>
+            <param name="targetsForSShips" type="list" default="[]" text="Targets for S ships">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station]" />
+                <input_param name="owner" value="this.ship.trueowner" />
+            </param>
+            <param name="targetsForMShips" type="list" default="[]" text="Targets for M ships">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station]" />
+                <input_param name="owner" value="this.ship.trueowner" />
+            </param>
+            <param name="targetsForLShips" type="list" default="[]" text="Targets for L ships">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station]" />
+                <input_param name="owner" value="this.ship.trueowner" />
+            </param>
+        </params>
+        <requires>
+            <match shiptype="shiptype.lasertower" negate="true" />
+        </requires>
+    </order>
+
+    <interrupts>
+        <handler ref="SectorChangeHandler" />
+        <handler ref="AttackHandler" />
+        <handler ref="MissileLockHandler" />
+        <handler ref="ScannedHandler" />
+        <handler ref="InspectedHandler" />
+        <handler ref="FoundAbandonedHandler" />
+        <handler ref="FoundLockboxHandler" />
+        <handler ref="ResupplyHandler" />
+        <handler ref="TargetInvalidHandler" />
+        <handler ref="TideHandler" />
+    </interrupts>
+
+    <init>
+        <set_order_syncpoint_reached order="this.assignedcontrolled.order" />
+    </init>
+
+    <attention min="unknown">
+        <actions>
+
+            <!-- Zuerst in die Nähe der Station fliegen -->
+            <!-- TODO: Parametrisierbar machen (Home-Station anfliegen, Home-Station-Zone anfliegen, Home-Sektor anfliegen, ignorieren) -->
+            <set_command command="command.move" param="$sourceStation" />
+            <set_command_action commandaction="commandaction.flying" />
+            <run_script name="'move.generic'" result="$movesuccess">
+                <param name="destination" value="$sourceStation" />
+                <param name="endintargetzone" value="true" />
+            </run_script>
+
+            <!-- Scheduling versuchen -->
+            <set_command command="command.searchtrades" />
+            <set_command_action commandaction="commandaction.searchingtrades" />
+            <signal_objects object="player.entity" param="'InfectedmRequestScheduling'" param2="this.ship" />
+
+            <!-- An Home Station docken -->
+            <set_command_action commandaction="commandaction.docking" />
+            <run_script name="'order.dock'" result="$docksuccess">
+                <param name="destination" value="$sourceStation" />
+                <param name="trading" value="true" />
+            </run_script>
+
+            <!-- Regelmäßig neue Schedulings versuchen -->
+            <do_while value="true">
+                <set_command_action commandaction="commandaction.searchingtrades" />
+                <signal_objects object="player.entity" param="'InfectedmRequestScheduling'" param2="this.ship" />
+                <wait min="30s" max="60s" />
+            </do_while>
+        </actions>
+    </attention>
+</aiscript>

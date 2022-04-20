@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aiscript name="TradeMuleInfectedm" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="4">
+
+    <order id="TradeMuleInfectedm" name="TradeMule (infectedm)" description="Distribution Mule (infectedm)" category="trade" infinite="true">
+        <params>
+            <param name="sourceStation" required="true" type="object" text="Home Station">
+                <input_param name="class" value="[class.station]" />
+                <input_param name="owner" value="this.ship.trueowner" />
+            </param>
+            <param name="targetsForAllShips" type="list" default="[]" text="Targets for all ships">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station, class.sector]" />
+            </param>
+            <param name="targetsForSShips" type="list" default="[]" text="Targets for S ships">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station, class.sector]" />
+            </param>
+            <param name="targetsForMShips" type="list" default="[]" text="Targets for M ships">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station, class.sector]" />
+            </param>
+            <param name="targetsForLShips" type="list" default="[]" text="Targets for L ships">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station, class.sector]" />
+            </param>
+            <param name="priorization" default="50" type="number" text="Prioritize Profit &lt;-&gt; Cargo Levels">
+                <input_param name="min" value="0" />
+                <input_param name="max" value="100" />
+            </param>
+            <param name="sellWares" type="list" default="[]" text="Sell Wares">
+                <input_param name="type" value="'ware'" />
+            </param>
+            <param name="sellPublicWares" type="bool" default="true" text="Sell wares with public sell offers">
+                <input_param name="type" value="'ware'" />
+            </param>
+            <param name="buyWares" type="list" default="[]" text="Buy Wares">
+                <input_param name="type" value="'ware'" />
+            </param>
+            <param name="buyPublicWares" type="bool" default="true" text="Buy wares with public buy offers">
+                <input_param name="type" value="'ware'" />
+            </param>
+        </params>
+        <requires>
+            <match shiptype="shiptype.lasertower" negate="true" />
+        </requires>
+    </order>
+
+    <interrupts>
+        <handler ref="SectorChangeHandler" />
+        <handler ref="AttackHandler" />
+        <handler ref="MissileLockHandler" />
+        <handler ref="ScannedHandler" />
+        <handler ref="InspectedHandler" />
+        <handler ref="FoundAbandonedHandler" />
+        <handler ref="FoundLockboxHandler" />
+        <handler ref="ResupplyHandler" />
+        <handler ref="TargetInvalidHandler" />
+        <handler ref="TideHandler" />
+    </interrupts>
+
+    <init>
+        <set_order_syncpoint_reached order="this.assignedcontrolled.order" />
+    </init>
+
+    <patch sinceversion="4">
+        <set_value name="$sellWares" exact="[]" />
+        <set_value name="$buyWares" exact="[]" />
+        <set_value name="$sellPublicWares" exact="true" />
+        <set_value name="$buyPublicWares" exact="true" />
+    </patch>
+
+    <attention min="unknown">
+        <actions>
+
+            <!-- Zuerst in die Nähe der Station fliegen -->
+            <!-- TODO: Parametrisierbar machen (Home-Station anfliegen, Home-Station-Zone anfliegen, Home-Sektor anfliegen, ignorieren) -->
+            <set_command command="command.move" param="$sourceStation" />
+            <set_command_action commandaction="commandaction.flying" />
+            <run_script name="'move.generic'" result="$movesuccess">
+                <param name="destination" value="$sourceStation" />
+                <param name="endintargetzone" value="true" />
+            </run_script>
+
+            <!-- Scheduling versuchen -->
+            <set_command command="command.searchtrades" />
+            <set_command_action commandaction="commandaction.searchingtrades" />
+            <signal_objects object="player.entity" param="'InfectedmRequestScheduling'" param2="this.ship" />
+
+            <!-- An Home Station docken -->
+            <set_command_action commandaction="commandaction.docking" />
+            <run_script name="'order.dock'" result="$docksuccess">
+                <param name="destination" value="$sourceStation" />
+                <param name="trading" value="true" />
+            </run_script>
+
+            <!-- Regelmäßig neue Schedulings versuchen -->
+            <do_while value="true">
+                <set_command_action commandaction="commandaction.searchingtrades" />
+                <signal_objects object="player.entity" param="'InfectedmRequestScheduling'" param2="this.ship" />
+                <wait min="30s" max="60s" />
+            </do_while>
+        </actions>
+    </attention>
+</aiscript>

@@ -1,0 +1,22 @@
+#This Git-Ignore skips pushing various project files not needed for the repo.
+
+#XSD Schema
+*.xsd
+
+#Windows Scripts
+*.bat
+*.ps1
+
+#Linux Scripts
+*.sh
+
+#X4 Packages
+*.png
+ext_*.cat
+ext_*.dat
+
+#VScode Workspaces
+*.code-workspace
+
+#Misc/Other Annoyances
+desktop.ini
