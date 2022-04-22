@@ -165,46 +165,32 @@
           </do_all>
         </do_if>
 
-        <!-- Liste der zulässigen Fraktionen zusammenstellen
-        <create_list name="$factionFilter" />
-        <do_if value="$order.factions != null and $order.factions.count gt 0">
-          <append_list_elements name="$factionFilter" other="$order.factions" />
-        </do_if>
-        <do_else comment="Alle factions hinzufügen">
-          <append_list_elements name="$factionFilter" other="lookup.faction" />
-        </do_else>
-        <remove_from_list name="$factionFilter" exact="faction.player" />
-        <debug_to_file chance="100" name="$ship.idcode" directory="'distrimules-logs'" text="'Factions: ' + $factionFilter" output="false" append="true" /> -->
-
-        <!-- Source und Target Station ermitteln -->
         <set_value name="$sourceStation" exact="$order.$sourceStation" />
-        <set_value name="$targetStations" exact="[]" />
-        <run_actions ref="CollectStations">
-          <param name="result" value="$targetStations" />
+
+        <!-- Alle Targets für das aktuelle Schiff ermitteln -->
+        <create_list name="$targetsForThisShip" />
+        <do_if value="$ship.isclass.ship_s">
+          <append_list_elements name="$targetsForThisShip" other="$order.$targetsForS" />
+          <append_list_elements name="$targetsForThisShip" other="$order.$targetsForSM" />
+          <append_list_elements name="$targetsForThisShip" other="$order.$targetsForSML" />
+        </do_if>
+        <do_if value="$ship.isclass.ship_m">
+          <append_list_elements name="$targetsForThisShip" other="$order.$targetsForM" />
+          <append_list_elements name="$targetsForThisShip" other="$order.$targetsForSM" />
+          <append_list_elements name="$targetsForThisShip" other="$order.$targetsForML" />
+          <append_list_elements name="$targetsForThisShip" other="$order.$targetsForSML" />
+        </do_if>
+        <do_if value="$ship.isclass.ship_l">
+          <append_list_elements name="$targetsForThisShip" other="$order.$targetsForL" />
+          <append_list_elements name="$targetsForThisShip" other="$order.$targetsForML" />
+          <append_list_elements name="$targetsForThisShip" other="$order.$targetsForSML" />
+        </do_if>
+
+        <!-- Aus den Targets die Stationen ermitteln (man kann Sektoren als Ziel angeben) -->
+        <run_actions ref="GetStationsFromTargetList" result="$targetStations">
           <param name="targets" value="$order.$targetsForAllShips" />
           <param name="ship" value="$ship" />
         </run_actions>
-        <do_if value="$ship.isclass.ship_s">
-          <run_actions ref="CollectStations">
-            <param name="result" value="$targetStations" />
-            <param name="targets" value="$order.$targetsForSShips" />
-            <param name="ship" value="$ship" />
-          </run_actions>
-        </do_if>
-        <do_if value="$ship.isclass.ship_m">
-          <run_actions ref="CollectStations">
-            <param name="result" value="$targetStations" />
-            <param name="targets" value="$order.$targetsForMShips" />
-            <param name="ship" value="$ship" />
-          </run_actions>
-        </do_if>
-        <do_if value="$ship.isclass.ship_l">
-          <run_actions ref="CollectStations">
-            <param name="result" value="$targetStations" />
-            <param name="targets" value="$order.$targetsForLShips" />
-            <param name="ship" value="$ship" />
-          </run_actions>
-        </do_if>
 
         <debug_to_file chance="100" name="$ship.idcode" directory="'distrimules-logs'" text="'Deliveries:'" output="false" append="true" />
         <do_all exact="$muleDeliveries.count" counter="$d">
@@ -216,7 +202,7 @@
           <create_list name="$pushWares" />
           <append_list_elements name="$pushWares" other="$order.$sellWares" />
           <do_if value="$order.$sellPublicWares">
-            <find_sell_offer seller="$order.$sourceStation" result="$sellOffers" multiple="true" usereservations="false" />
+            <find_sell_offer seller="$sourceStation" result="$sellOffers" multiple="true" usereservations="false" />
             <run_actions ref="GetPublicWaresFromOffers" result="$publicSellWares">
               <param name="tradeoffers" value="$sellOffers" />
             </run_actions>
@@ -232,7 +218,7 @@
           <create_list name="$pullWares" />
           <append_list_elements name="$pullWares" other="$order.$buyWares" />
           <do_if value="$order.$buyPublicWares">
-            <find_buy_offer buyer="$order.$sourceStation" result="$buyOffers" multiple="true" usereservations="false" />
+            <find_buy_offer buyer="$sourceStation" result="$buyOffers" multiple="true" usereservations="false" />
             <run_actions ref="GetPublicWaresFromOffers" result="$publicBuyWares">
               <param name="tradeoffers" value="$buyOffers" />
             </run_actions>
@@ -495,10 +481,10 @@
               </do_if>
               <do_if value="$order.id == 'TradeMuleInfectedm'">
                 <do_if value="$providerStation.idcode == $order.$sourceStation.idcode" comment="Push Trade">
-                  <set_value name="$rating" exact="($amount * [$profitRatio, 0].max)^(1f-$order.$priorization/100f) * ($providerCargoRatio)^($order.$priorization/100f)" />
+                  <set_value name="$rating" exact="($amount * [$profitRatio, 0].max)^($order.$priorization/100f) * ($providerCargoRatio)^(1f-$order.$priorization/100f)" />
                 </do_if>
                 <do_else comment="Pull Trade">
-                  <set_value name="$rating" exact="($amount * [$profitRatio, 0].max)^(1f-$order.$priorization/100f) * (100-$receiverCargoRatio)^($order.$priorization/100f)" />
+                  <set_value name="$rating" exact="($amount * [$profitRatio, 0].max)^($order.$priorization/100f) * (100f-$receiverCargoRatio)^(1f-$order.$priorization/100f)" />
                 </do_else>
               </do_if>
 
@@ -545,14 +531,14 @@
       </actions>
     </library>
 
-    <library name="CollectStations" purpose="run_actions" namespace="this">
+    <library name="GetStationsFromTargetList" purpose="run_actions" namespace="this">
       <params>
-        <param name="result" comment="Liste, in der alles zusammen gemerged wird" />
         <param name="targets" comment="Neue Targets, die hinzugefügt werden sollen; entweder vom Typ station oder sector" />
         <param name="ship" comment="Schiff, für das das Scheduling stattfindet; wird hier übergeben, damit man prüfen kann, ob ein Andocken überhaupt möglich ist" />
       </params>
       <actions>
 
+        <create_list name="$result" />
         <do_all exact="$targets.count" counter="$idxTarget">
           <set_value name="$target" exact="$targets.{$idxTarget}" />
 
@@ -583,6 +569,8 @@
             </do_if>
           </do_all>
         </do_all>
+
+        <return value="$result" />
       </actions>
     </library>
 

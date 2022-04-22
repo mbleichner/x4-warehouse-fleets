@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="DistriMuleInfectedm" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="3">
+<aiscript name="DistriMuleInfectedm" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="15">
 
     <order id="DistriMuleInfectedm" name="DistriMule (infectedm)" description="Distribution Mule (infectedm)" category="trade" infinite="true">
         <params>
@@ -7,22 +7,32 @@
                 <input_param name="class" value="[class.station]" />
                 <input_param name="owner" value="this.ship.trueowner" />
             </param>
-            <param name="targetsForAllShips" type="list" default="[]" text="Targets for all ships">
+            <param name="targetsForSML" type="list" default="[]" text="Targets">
                 <input_param name="type" value="'object'" />
                 <input_param name="class" value="[class.station]" />
                 <input_param name="owner" value="this.ship.trueowner" />
             </param>
-            <param name="targetsForSShips" type="list" default="[]" text="Targets for S ships">
+            <param name="targetsForS" type="list" default="[]" text="Targets (S)">
                 <input_param name="type" value="'object'" />
                 <input_param name="class" value="[class.station]" />
                 <input_param name="owner" value="this.ship.trueowner" />
             </param>
-            <param name="targetsForMShips" type="list" default="[]" text="Targets for M ships">
+            <param name="targetsForSM" type="list" default="[]" text="Targets (S+M)">
                 <input_param name="type" value="'object'" />
                 <input_param name="class" value="[class.station]" />
                 <input_param name="owner" value="this.ship.trueowner" />
             </param>
-            <param name="targetsForLShips" type="list" default="[]" text="Targets for L ships">
+            <param name="targetsForM" type="list" default="[]" text="Targets (M)">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station]" />
+                <input_param name="owner" value="this.ship.trueowner" />
+            </param>
+            <param name="targetsForML" type="list" default="[]" text="Targets (M+L)">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station]" />
+                <input_param name="owner" value="this.ship.trueowner" />
+            </param>
+            <param name="targetsForL" type="list" default="[]" text="Targets (L)">
                 <input_param name="type" value="'object'" />
                 <input_param name="class" value="[class.station]" />
                 <input_param name="owner" value="this.ship.trueowner" />
