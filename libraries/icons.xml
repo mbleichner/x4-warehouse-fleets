@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<diff>
+<diff xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/diff.xsd">
     <add sel="/icons">
-        <icon name="order_distrimuleinfectedm" texture="assets\fx\gui\textures\order\order_tradeexchangepassive.tga" height="32" width="32"></icon>
+        <icon name="order_warehousefleet" texture="assets\fx\gui\textures\order\order_traderoutine.tga" height="32" width="32"></icon>
     </add>
     <add sel="/icons">
-        <icon name="order_trademuleinfectedm" texture="assets\fx\gui\textures\order\order_traderoutine.tga" height="32" width="32"></icon>
-    </add>
-    <add sel="/icons">
-        <icon name="order_returnhome" texture="assets\fx\gui\textures\order\order_moveandwait.tga" height="32" width="32"></icon>
+        <icon name="order_returnhome" texture="assets\fx\gui\textures\order\order_movetoobject.tga" height="32" width="32"></icon>
     </add>
 </diff>

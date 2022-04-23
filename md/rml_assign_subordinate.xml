@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/diff.xsd">
+    <replace sel="//cue[@name='StartMission' and @onfail='cancel']/conditions">
+        <conditions>
+            <check_value value="false" />
+        </conditions>
+    </replace>
+</diff>

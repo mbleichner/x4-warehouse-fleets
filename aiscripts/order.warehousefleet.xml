@@ -1,41 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="DistriMuleInfectedm" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="15">
+<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="20">
 
-    <order id="DistriMuleInfectedm" name="DistriMule (infectedm)" description="Distribution Mule (infectedm)" category="trade" infinite="true">
+    <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
         <params>
             <param name="sourceStation" required="true" type="object" text="Home Station">
                 <input_param name="class" value="[class.station]" />
                 <input_param name="owner" value="this.ship.trueowner" />
             </param>
-            <param name="targetsForSML" type="list" default="[]" text="Targets">
+            <param name="targetsS" type="list" default="[]" text="Targets (S)">
                 <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station]" />
-                <input_param name="owner" value="this.ship.trueowner" />
+                <input_param name="class" value="[class.station, class.sector]" />
             </param>
-            <param name="targetsForS" type="list" default="[]" text="Targets (S)">
+            <param name="targetsM" type="list" default="[]" text="Targets (M)">
                 <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station]" />
-                <input_param name="owner" value="this.ship.trueowner" />
+                <input_param name="class" value="[class.station, class.sector]" />
             </param>
-            <param name="targetsForSM" type="list" default="[]" text="Targets (S+M)">
+            <param name="targetsL" type="list" default="[]" text="Targets (L)">
                 <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station]" />
-                <input_param name="owner" value="this.ship.trueowner" />
+                <input_param name="class" value="[class.station, class.sector]" />
             </param>
-            <param name="targetsForM" type="list" default="[]" text="Targets (M)">
-                <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station]" />
-                <input_param name="owner" value="this.ship.trueowner" />
+            <param name="prioDistriTrade" default="50" type="number" text="Prio: Distribute &lt;-&gt; Trade">
+                <input_param name="min" value="0" />
+                <input_param name="max" value="100" />
             </param>
-            <param name="targetsForML" type="list" default="[]" text="Targets (M+L)">
-                <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station]" />
-                <input_param name="owner" value="this.ship.trueowner" />
+            <param name="prioStorageProfit" default="50" type="number" text="Prio: Storage &lt;-&gt; Profit">
+                <input_param name="min" value="0" />
+                <input_param name="max" value="100" />
             </param>
-            <param name="targetsForL" type="list" default="[]" text="Targets (L)">
-                <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station]" />
-                <input_param name="owner" value="this.ship.trueowner" />
+            <param name="minCargoUsage" default="80" type="number" text="Min. Cargo Usage (%)">
+                <input_param name="min" value="20" />
+                <input_param name="max" value="90" />
+            </param>
+            <param name="sellWares" type="list" default="[]" text="Sell Wares">
+                <input_param name="type" value="'ware'" />
+            </param>
+            <param name="sellPublicWares" type="bool" default="true" text="Include public sell offers">
+                <input_param name="type" value="'ware'" />
+            </param>
+            <param name="buyWares" type="list" default="[]" text="Buy Wares">
+                <input_param name="type" value="'ware'" />
+            </param>
+            <param name="buyPublicWares" type="bool" default="true" text="Include public buy offers">
+                <input_param name="type" value="'ware'" />
             </param>
         </params>
         <requires>
@@ -63,19 +69,23 @@
     <attention min="unknown">
         <actions>
 
+            <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="' TTT ' + this.ship.sector == $sourceStation.sector"/>
+
             <!-- Zuerst in die Nähe der Station fliegen -->
             <!-- TODO: Parametrisierbar machen (Home-Station anfliegen, Home-Station-Zone anfliegen, Home-Sektor anfliegen, ignorieren) -->
+            <!--
             <set_command command="command.move" param="$sourceStation" />
             <set_command_action commandaction="commandaction.flying" />
             <run_script name="'move.generic'" result="$movesuccess">
                 <param name="destination" value="$sourceStation" />
-                <param name="endintargetzone" value="true" />
+                <param name="endintargetzone" value="this.ship.sector == $sourceStation.sector" />
             </run_script>
+        -->
 
             <!-- Scheduling versuchen -->
             <set_command command="command.searchtrades" />
             <set_command_action commandaction="commandaction.searchingtrades" />
-            <signal_objects object="player.entity" param="'InfectedmRequestScheduling'" param2="this.ship" />
+            <signal_objects object="player.entity" param="'RequestMuleScheduling'" param2="this.ship" />
 
             <!-- An Home Station docken -->
             <set_command_action commandaction="commandaction.docking" />
@@ -87,7 +97,7 @@
             <!-- Regelmäßig neue Schedulings versuchen -->
             <do_while value="true">
                 <set_command_action commandaction="commandaction.searchingtrades" />
-                <signal_objects object="player.entity" param="'InfectedmRequestScheduling'" param2="this.ship" />
+                <signal_objects object="player.entity" param="'RequestMuleScheduling'" param2="this.ship" />
                 <wait min="30s" max="60s" />
             </do_while>
         </actions>

@@ -1,24 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <diff xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/diff.xsd">
     <add sel="//do_if[@value='not $order.requiredskill or (this.combinedskill ge $order.requiredskill)']">
-        <do_if value="$order.id == 'DistriMuleInfectedm'">
+        <do_if value="$order.id == 'WarehouseFleet'">
             <set_value name="$added" />
             <run_script name="$scriptname">
                 <param name="sourceStation" value="$order.$sourceStation" />
-                <param name="targetsForAllShips" value="$order.$targetsForAllShips" />
-                <param name="targetsForSShips" value="$order.$targetsForSShips" />
-                <param name="targetsForMShips" value="$order.$targetsForMShips" />
-                <param name="targetsForLShips" value="$order.$targetsForLShips" />
-            </run_script>
-        </do_if>
-        <do_if value="$order.id == 'TradeMuleInfectedm'">
-            <set_value name="$added" />
-            <run_script name="$scriptname">
-                <param name="sourceStation" value="$order.$sourceStation" />
-                <param name="targetsForAllShips" value="$order.$targetsForAllShips" />
-                <param name="targetsForSShips" value="$order.$targetsForSShips" />
-                <param name="targetsForMShips" value="$order.$targetsForMShips" />
-                <param name="targetsForLShips" value="$order.$targetsForLShips" />
+                <param name="targetsS" value="$order.$targetsS" />
+                <param name="targetsM" value="$order.$targetsM" />
+                <param name="targetsL" value="$order.$targetsL" />
+                <param name="prioDistriTrade" value="$order.$prioDistriTrade" />
+                <param name="prioStorageProfit" value="$order.$prioStorageProfit" />
+                <param name="minCargoUsage" value="$order.$minCargoUsage" />
                 <param name="sellWares" value="$order.$sellWares" />
                 <param name="sellPublicWares" value="$order.$sellPublicWares" />
                 <param name="buyWares" value="$order.$buyWares" />
