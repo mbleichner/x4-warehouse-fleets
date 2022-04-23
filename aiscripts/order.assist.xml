@@ -11,6 +11,7 @@
                 <param name="prioDistriTrade" value="$order.$prioDistriTrade" />
                 <param name="prioStorageProfit" value="$order.$prioStorageProfit" />
                 <param name="minCargoUsage" value="$order.$minCargoUsage" />
+                <param name="tradeGatePenalty" value="$order.$tradeGatePenalty" />
                 <param name="sellWares" value="$order.$sellWares" />
                 <param name="sellPublicWares" value="$order.$sellPublicWares" />
                 <param name="buyWares" value="$order.$buyWares" />

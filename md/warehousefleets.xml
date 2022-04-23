@@ -7,20 +7,31 @@
       </conditions>
       <actions>
         <set_value name="$deliveries" exact="[]" />
-        <debug_to_file chance="100" name="'init'" directory="'WarehouseFleets'" text="'Initialized delivery list'" output="false" append="true" />
+        <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'Initialized delivery list'" output="false" append="true" />
       </actions>
 
       <cues>
 
+        <!-- TODO: irgendwie gescheit implementieren
+        <cue name="Initializer" instantiate="true" checkinterval="10">
+          <conditions>
+            <check_value value="true" />
+          </conditions>
+          <actions>
+            <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'MOEP'" output="false" append="true" />
+            <reset_cue cue="WarehouseFleets" />
+          </actions>
+        </cue>-->
+
         <cue name="ScheduleRequestListener" instantiate="true">
           <conditions>
-            <event_object_signalled object="player.entity" param="'RequestMuleScheduling'" />
+            <event_object_signalled object="player.entity" param="'RequestWarehouseFleetScheduling'" />
           </conditions>
           <actions>
             <set_value name="$ship" exact="event.param2" />
             <set_value name="$deliveries" exact="parent.$deliveries" />
-            <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'Schedule request received for ship ' + $ship.idcode + '/' + $deliveries" output="false" append="true" />
-            <run_actions ref="MuleScheduler">
+            <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'Schedule request received for ship ' + $ship.idcode" output="false" append="true" />
+            <run_actions ref="WarehouseFleetScheduler">
               <param name="ship" value="$ship" />
               <param name="deliveries" value="$deliveries" />
             </run_actions>
@@ -90,7 +101,7 @@
               <actions>
                 <do_if value="$order.exists">
                   <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'Processing last order, scheduling next trades for ' + $ship.idcode" output="false" append="true" />
-                  <run_actions ref="MuleScheduler">
+                  <run_actions ref="WarehouseFleetScheduler">
                     <param name="ship" value="$ship" />
                     <param name="deliveries" value="$deliveries" />
                   </run_actions>
@@ -101,7 +112,7 @@
         </cue>
 
         <!-- Entfernt regelmäßig alte Deliveries aus der globalen Liste -->
-        <cue name="DistriMuleGarbageCollector" checkinterval="30" instantiate="true">
+        <cue name="GarbageCollector" checkinterval="30" instantiate="true">
           <actions>
             <set_value name="$deliveries" exact="parent.$deliveries" />
             <create_list name="$entriesToEvict" />
@@ -121,7 +132,7 @@
     </cue>
 
     <!-- Library-Funktion die den nächsten Auftrag für ein Schiff bestimmt und als Order erzeugt -->
-    <library name="MuleScheduler" purpose="run_actions">
+    <library name="WarehouseFleetScheduler" purpose="run_actions">
       <params>
         <param name="ship" />
         <param name="deliveries" />
@@ -145,8 +156,8 @@
             <set_value name="$money" exact="$amount * $ware.averageprice" />
             <remove_cargo object="$ship" ware="$ware" exact="$amount" />
             <reward_player money="$money" />
-            <set_value name="$rewardLogText" exact="'rewarded player for ' +$amount + ' ' +$ware + ' at averageprice ' +$ware.averageprice/100.0 + ' due to mule cargo emptying routine'" />
-            <write_to_logbook category="upkeep" object="$ship" title="'DistriMule: ' + $ship.knownname +' (' + $ship.idcode + ')'" interaction="showonmap" money="$money" text="$rewardLogText" />
+            <set_value name="$rewardLogText" exact="'rewarded player for ' +$amount + ' ' +$ware + ' at averageprice ' +$ware.averageprice/100.0 + ' due to cargo emptying routine'" />
+            <write_to_logbook category="upkeep" object="$ship" title="'WarehouseFleet: ' + $ship.knownname +' (' + $ship.idcode + ')'" interaction="showonmap" money="$money" text="$rewardLogText" />
           </do_all>
         </do_if>
 
@@ -297,7 +308,7 @@
         </do_if>
         <do_else>
           <create_order object="$ship" id="'ReturnToWarehouse'">
-            <param name="destination" value="$sourceStation"/>
+            <param name="destination" value="$sourceStation" />
           </create_order>
         </do_else>
 
@@ -435,22 +446,42 @@
                 <set_value name="$equalizingAmount" exact="$shipCapacity" comment="ignoriert den Parameter effektiv" />
               </do_else>
 
-              <!-- Rating berechnen (Höheres Rating = wichtigerer Trip) -->
               <set_value name="$amount" exact="[[$shipCapacity, $providerOffer.amount, $receiverOffer.amount, $equalizingAmount].min, 0].max" />
+              <do_if value="$amount == 0">
+                <continue />
+              </do_if>
+
               <set_value name="$profitRatio" exact="($receiverOffer.unitprice)f / ($providerOffer.unitprice)f - 1f" />
+              <do_if value="$tripType == 'trade' and $profitRatio le 0">
+                <continue />
+              </do_if>
+
               <set_value name="$cargoUsage" exact="($amount)f / $shipCapacity" />
+              <do_if value="$cargoUsage lt 0.2">
+                <continue comment="Hartkodierter Schwellwert, damit schiffe nicht wegen 2 Items irgendwo andocken müssen" />
+              </do_if>
+
+              <!-- Rating berechnen (Höheres Rating = wichtigerer Trip) -->
               <do_if value="$tripType == 'distribution'">
                 <!-- Bei einem Distribution Trip bewerten wir die Abweichung der Füllstände. Das Auffüllen besonders niedriger Stände wird bevorzugt -->
                 <set_value name="$rating" exact="0.5 * (2f - $receiverCargoRatio / 100.0) * ($providerCargoRatio - $receiverCargoRatio) * $cargoUsage * (1f-$order.$prioDistriTrade/100f)" />
               </do_if>
               <do_if value="$tripType == 'trade'">
                 <!-- Bei einem Verkauf von Waren bevorzugen wir Waren mit hohem Stand in der Storage; bei einem Ankauf bevorzugen wir Waren mit niedrigem Stand -->
+                <set_value name="$gd" exact="$providerStation.gatedistance.{$receiverStation}.{blacklistgroup.civilian}.{$ship}" />
                 <set_value name="$storageLevelRating" exact="if $providerStation.idcode == $order.$sourceStation.idcode then $providerCargoRatio else (100f - $receiverCargoRatio)" />
-                <set_value name="$rating" exact="[100f * $profitRatio * $cargoUsage, 0].max ^ ($order.$prioStorageProfit/100f) * $storageLevelRating ^ (1f-$order.$prioStorageProfit/100f) * ($order.$prioDistriTrade/100f)" />
+                <set_value name="$rating" exact="
+                    [100f * $profitRatio * $cargoUsage, 0].max ^ ($order.$prioStorageProfit/100f) 
+                  * $storageLevelRating ^ (1f-$order.$prioStorageProfit/100f)
+                  * ($order.$prioDistriTrade/100f)
+                  * ($order.$tradeGatePenalty/100f) ^ $gd
+                " />
+              </do_if>
+              <do_if value="$rating le 0">
+                <continue />
               </do_if>
 
-              <do_if value="false">
-                <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  '
+              <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  '
                   + '[' + (if $tripType == 'distribution' then 'D' else 'T') + '] '
                   + $providerOffer.ware + ': ' + '%.1s'.[$providerCargoRatio] + '% -> ' + '%.1s'.[$receiverCargoRatio] + '%'
                   + ', rating = ' + '%.1s'.[$rating]
@@ -469,39 +500,23 @@
                   + ', equalizingAmount = ' + @$equalizingAmount
                   + ', shipCapacity = ' + $shipCapacity
                   + ', amount = ' + $amount
+                  + ', gd = ' + @$gd
                   + ', cargoUsage = ' + '%.1s'.[100.0 * $cargoUsage] + '%'
                 " output="false" append="true" />
-              </do_if>
 
-              <do_if value="$rating gt 0 and $amount gt 0 and $cargoUsage ge 0.2 and ($tripType == 'distribution' or $profitRatio gt 0)">
-                <set_value name="$trip" exact="table[
-                  $tripType = $tripType,  
-                  $ware = $providerOffer.ware,
-                  $providerStation = $providerStation,
-                  $receiverStation = $receiverStation,
-                  $providerOffer = $providerOffer, 
-                  $receiverOffer = $receiverOffer, 
-                  $backpressure = $backpressure,
-                  $amount = $amount,
-                  $rating = $rating,
-                  $cargoUsage = $cargoUsage,
-                  $profitRatio = $profitRatio,
-                ]" />
-
-                <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  '
-                  + 'tripType = ' + $tripType
-                  + ', rating = ' + '%.1s'.[$trip.$rating]
-                  + ', ware = ' + $trip.$ware.id
-                  + ', provider = ' + $trip.$providerStation.idcode
-                  + ', receiver = ' + $trip.$receiverStation.idcode
-                  + ', profitRatio = ' + '%.1s'.[100.0 * $trip.$profitRatio] + '%'
-                  + ', amount = ' + $trip.$amount
-                  + ', backpressure = ' + $trip.$backpressure
-                  + ', cargoUsage = ' + '%.1s'.[100.0 * $trip.$cargoUsage] + '%'
-                " output="false" append="true" />
-
-                <append_to_list name="$possibleTrips" exact="$trip" />
-              </do_if>
+              <append_to_list name="$possibleTrips" exact="table[
+                $tripType = $tripType,  
+                $ware = $providerOffer.ware,
+                $providerStation = $providerStation,
+                $receiverStation = $receiverStation,
+                $providerOffer = $providerOffer, 
+                $receiverOffer = $receiverOffer, 
+                $backpressure = $backpressure,
+                $amount = $amount,
+                $rating = $rating,
+                $cargoUsage = $cargoUsage,
+                $profitRatio = $profitRatio,
+              ]" />
             </do_if>
           </do_all>
         </do_all>

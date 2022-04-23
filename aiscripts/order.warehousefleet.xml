@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="20">
+<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="22">
 
     <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
         <params>
@@ -29,6 +29,10 @@
             </param>
             <param name="minCargoUsage" default="80" type="number" text="Min. Cargo Usage (%)">
                 <input_param name="min" value="20" />
+                <input_param name="max" value="90" />
+            </param>
+            <param name="tradeGatePenalty" default="20" type="number" text="Trades: Gate Penalty (%)">
+                <input_param name="min" value="0" />
                 <input_param name="max" value="90" />
             </param>
             <param name="sellWares" type="list" default="[]" text="Sell Wares">
@@ -69,7 +73,7 @@
     <attention min="unknown">
         <actions>
 
-            <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="' TTT ' + this.ship.sector == $sourceStation.sector"/>
+            <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="' TTT ' + this.ship.sector == $sourceStation.sector" />
 
             <!-- Zuerst in die Nähe der Station fliegen -->
             <!-- TODO: Parametrisierbar machen (Home-Station anfliegen, Home-Station-Zone anfliegen, Home-Sektor anfliegen, ignorieren) -->
@@ -85,7 +89,7 @@
             <!-- Scheduling versuchen -->
             <set_command command="command.searchtrades" />
             <set_command_action commandaction="commandaction.searchingtrades" />
-            <signal_objects object="player.entity" param="'RequestMuleScheduling'" param2="this.ship" />
+            <signal_objects object="player.entity" param="'RequestWarehouseFleetScheduling'" param2="this.ship" />
 
             <!-- An Home Station docken -->
             <set_command_action commandaction="commandaction.docking" />
@@ -97,7 +101,7 @@
             <!-- Regelmäßig neue Schedulings versuchen -->
             <do_while value="true">
                 <set_command_action commandaction="commandaction.searchingtrades" />
-                <signal_objects object="player.entity" param="'RequestMuleScheduling'" param2="this.ship" />
+                <signal_objects object="player.entity" param="'RequestWarehouseFleetScheduling'" param2="this.ship" />
                 <wait min="30s" max="60s" />
             </do_while>
         </actions>

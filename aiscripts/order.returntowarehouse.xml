@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="ReturnToWarehouse" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="4">
+<aiscript name="ReturnToWarehouse" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="6">
 
-    <order id="ReturnToWarehouse" name="Return Home" description="Return to home station" category="internal">
+    <order id="ReturnToWarehouse" name="Return to Warehouse" description="Return to Warehouse" category="internal">
         <params>
-            <param name="destination" required="true" advanced="true" type="internal" text="Home Station" />
+            <param name="destination" default="null" advanced="true" type="internal" text="Home Station" />
         </params>
         <requires>
             <match shiptype="shiptype.lasertower" negate="true" />
@@ -27,7 +27,6 @@
     <attention min="unknown">
         <actions>
             <label name="start" />
-            <debug_to_file chance="100" name="this.ship.idcode" directory="'distrimules-logs'" text="' TTT ' + this.ship.sector == $destination.sector"/>
             <do_if value="this.ship.zone != $destination.zone">
                 <set_command command="command.move" param="$destination" />
                 <set_command_action commandaction="commandaction.flyingto" param="$destination.zone" />

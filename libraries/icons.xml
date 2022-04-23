@@ -4,6 +4,6 @@
         <icon name="order_warehousefleet" texture="assets\fx\gui\textures\order\order_traderoutine.tga" height="32" width="32"></icon>
     </add>
     <add sel="/icons">
-        <icon name="order_returnhome" texture="assets\fx\gui\textures\order\order_movetoobject.tga" height="32" width="32"></icon>
+        <icon name="order_returntowarehouse" texture="assets\fx\gui\textures\order\order_movetoobject.tga" height="32" width="32"></icon>
     </add>
 </diff>
