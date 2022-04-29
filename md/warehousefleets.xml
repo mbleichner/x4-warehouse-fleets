@@ -474,18 +474,18 @@
                   ($providerCargo + $providerReservations) * (($receiverCapacity)LF / ($providerCapacity + $receiverCapacity))
                 - ($receiverCargo + $receiverReservations) * (($providerCapacity)LF / ($providerCapacity + $receiverCapacity))
                 )i" />
+                <!-- FIXME: $providerOffer.amount und $receiverOffer.amount wird hier absichtlich ignoriert, da die BuyOffers manchmal lächerlich geringe Mengen haben, wenn man nicht das volle Budget hat -->
+                <set_value name="$amount" exact="[[$shipCapacity, $equalizingAmount].min, 0].max" />
               </do_if>
               <do_else>
-                <set_value name="$equalizingAmount" exact="$shipCapacity" comment="ignoriert den Parameter effektiv" />
+                <set_value name="$amount" exact="[[$shipCapacity, $providerOffer.amount, $receiverOffer.amount].min, 0].max" />
               </do_else>
-
-              <set_value name="$amount" exact="[[$shipCapacity, $providerOffer.amount, $receiverOffer.amount, $equalizingAmount].min, 0].max" />
-              <set_value name="$cargoUsage" exact="($amount)f / $shipCapacity" />
               <do_if value="$amount == 0">
                 <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Amount ist 0'" append="true" />
                 <continue />
               </do_if>
 
+              <set_value name="$cargoUsage" exact="($amount)f / $shipCapacity" />
               <set_value name="$profitRatio" exact="($receiverOffer.unitprice)f / ($providerOffer.unitprice)f - 1f" />
               <do_if value="$tripType == 'trade' and $profitRatio le 0">
                 <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Profit negativ'" append="true" />
@@ -495,7 +495,7 @@
               <!-- Rating berechnen (Höheres Rating = wichtigerer Trip) -->
               <do_if value="$tripType == 'distribution'">
                 <!-- Bei einem Distribution Trip bewerten wir die Abweichung der Füllstände. Das Auffüllen besonders niedriger Stände wird bevorzugt -->
-                <set_value name="$rating" exact="0.5 * (2f - $receiverCargoRatio / 100.0) * ($providerCargoRatio - $receiverCargoRatio) * $cargoUsage * ($order.$prioDistribution/10f)" />
+                <set_value name="$rating" exact="(2f - $receiverCargoRatio / 100.0) * ($providerCargoRatio - $receiverCargoRatio) * $cargoUsage * ($order.$prioDistribution/10f)" />
               </do_if>
               <do_if value="$tripType == 'trade'">
                 <!-- Bei einem Verkauf von Waren bevorzugen wir Waren mit hohem Stand in der Storage; bei einem Ankauf bevorzugen wir Waren mit niedrigem Stand -->
@@ -510,10 +510,6 @@
               </do_if>
               <do_if value="$tripType == 'supply-build-storage'">
                 <set_value name="$rating" exact="$order.$prioBuild^2" comment="CargoUsage hier absichtlich nicht berücksichtigen, damit Build Storages immer bedient werden, auch wenn nur winzige Mengen fehlen"/>
-              </do_if>
-              <do_if value="$rating le 0">
-                <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Schlechtes Rating'" append="true" />
-                <continue />
               </do_if>
 
               <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  '
@@ -538,6 +534,11 @@
                   + ', gd = ' + @$gd
                   + ', cargoUsage = ' + '%.1s'.[100.0 * $cargoUsage] + '%'
                 " output="false" append="true" />
+
+                <do_if value="$rating le 0">
+                  <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Schlechtes Rating'" append="true" />
+                  <continue />
+                </do_if>
 
               <append_to_list name="$possibleTrips" exact="table[
                 $tripType = $tripType,  
