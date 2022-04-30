@@ -144,7 +144,7 @@
         <param name="deliveries" />
       </params>
       <actions>
-        <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'==============================='" output="false" append="true" />
+        <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'==============================='" output="false" append="false" />
 
         <!-- Abbrechen, falls das Default Command geändert wurde -->
         <set_value name="$order" exact="if $ship.defaultorder.id == 'Assist' then $ship.defaultorder.$baseorder else $ship.defaultorder" />
@@ -526,7 +526,7 @@
               <!-- Rating berechnen (Höheres Rating = wichtigerer Trip) -->
               <do_if value="$tripType == 'distribution'">
                 <!-- Bei einem Distribution Trip bewerten wir die Abweichung der Füllstände. Das Auffüllen besonders niedriger Stände wird bevorzugt -->
-                <set_value name="$rating" exact="(2f - $receiverCargoRatio / 100.0) * ($providerCargoRatio - $receiverCargoRatio) * $cargoUsage * ($order.$prioDistribution/10f)" />
+                <set_value name="$rating" exact="(1.5 - $receiverCargoRatio / 100.0)^2 * ($providerCargoRatio - $receiverCargoRatio) * $cargoUsage * ($order.$prioDistribution/10f)" />
               </do_if>
               <do_if value="$tripType == 'trade'">
                 <!-- Bei einem Verkauf von Waren bevorzugen wir Waren mit hohem Stand in der Storage; bei einem Ankauf bevorzugen wir Waren mit niedrigem Stand -->
