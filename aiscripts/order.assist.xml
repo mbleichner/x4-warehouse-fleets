@@ -5,9 +5,10 @@
             <set_value name="$added" />
             <run_script name="$scriptname">
                 <param name="sourceStation" value="$order.$sourceStation" />
-                <param name="targetsS" value="$order.$targetsS" />
-                <param name="targetsM" value="$order.$targetsM" />
-                <param name="targetsL" value="$order.$targetsL" />
+                <param name="targetStations" value="$order.$targetStations" />
+                <param name="serviceArea" value="$order.$serviceArea" />
+                <param name="blacklistM" value="$order.$blacklistM" />
+                <param name="blacklistL" value="$order.$blacklistL" />
                 <param name="prioDistribution" value="$order.$prioDistribution" />
                 <param name="prioTrade" value="$order.$prioTrade" />
                 <param name="prioBuild" value="$order.$prioBuild" />

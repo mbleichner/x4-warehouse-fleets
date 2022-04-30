@@ -1,27 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="23">
+<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="31">
 
     <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
         <params>
 
-            <!-- TODO: Umbenennen -->
-            <param name="sourceStation" required="true" type="object" text="Warehouse Station">
+            <param name="sourceStation" required="true" type="object" text="Home Warehouse">
+                <!-- TODO: Umbenennen -->
                 <input_param name="class" value="[class.station]" />
                 <input_param name="owner" value="this.ship.trueowner" />
             </param>
+            <param name="targetStations" type="list" default="[]" text="Adjacent Warehouses">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station]" />
+                <input_param name="owner" value="this.ship.trueowner" />
+            </param>
+            <param name="serviceArea" type="list" default="[]" text="Extended Service Area">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station, class.sector]" />
+            </param>
+            <param name="blacklistM" type="list" default="[]" text="Blacklist (M)">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station, class.sector]" />
+            </param>
+            <param name="blacklistL" type="list" default="[]" text="Blacklist (L)">
+                <input_param name="type" value="'object'" />
+                <input_param name="class" value="[class.station, class.sector]" />
+            </param>
 
-            <param name="targetsS" type="list" default="[]" text="Targets (S)">
-                <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station, class.sector]" />
-            </param>
-            <param name="targetsM" type="list" default="[]" text="Targets (M)">
-                <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station, class.sector]" />
-            </param>
-            <param name="targetsL" type="list" default="[]" text="Targets (L)">
-                <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station, class.sector]" />
-            </param>
             <param name="prioDistribution" default="5" type="number" text="Prio: Distribute">
                 <input_param name="min" value="0" />
                 <input_param name="max" value="10" />
@@ -30,13 +35,10 @@
                 <input_param name="min" value="0" />
                 <input_param name="max" value="10" />
             </param>
-
-            <!-- TODO: Evaluieren, ob das so Sinn macht, oder ob man nicht lieber Construction Subordinates verwenden sollte -->
             <param name="prioBuild" default="5" type="number" text="Prio: Supply Build Storage">
                 <input_param name="min" value="0" />
                 <input_param name="max" value="10" />
             </param>
-
             <param name="prioStorageVsProfit" default="5" type="number" text="Prio: Storage &lt;-&gt; Profit">
                 <input_param name="min" value="0" />
                 <input_param name="max" value="10" />
@@ -68,6 +70,7 @@
     </order>
 
     <interrupts>
+        <!--
         <handler ref="SectorChangeHandler" />
         <handler ref="AttackHandler" />
         <handler ref="MissileLockHandler" />
@@ -78,10 +81,14 @@
         <handler ref="ResupplyHandler" />
         <handler ref="TargetInvalidHandler" />
         <handler ref="TideHandler" />
+-->
     </interrupts>
 
     <init>
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'Konto vor init: ' + this.ship.money" output="false" append="true" />
         <set_order_syncpoint_reached order="this.assignedcontrolled.order" />
+        <!--share_object_account object="this.ship" otherobject="$sourceStation" transferto="$sourceStation" />
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'Konto nach init: ' + this.ship.money" output="false" append="true" /-->
     </init>
 
     <attention min="unknown">
@@ -107,4 +114,9 @@
             </do_while>
         </actions>
     </attention>
+
+    <on_abort>
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'on_abort'" output="false" append="true" />
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'Konto: ' + this.ship.money" output="false" append="true" />
+    </on_abort>
 </aiscript>

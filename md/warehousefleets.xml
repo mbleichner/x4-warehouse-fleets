@@ -153,10 +153,10 @@
           <return />
         </do_if>
 
-        <!-- Target-Liste nach Stationen/Sektoren sortieren -->
-        <sort_list list="$order.$targetsS" sortbyvalue="if loop.element.class == class.sector then ('ZZZ ' + loop.element.knownname) else loop.element.knownname" />
-        <sort_list list="$order.$targetsM" sortbyvalue="if loop.element.class == class.sector then ('ZZZ ' + loop.element.knownname) else loop.element.knownname" />
-        <sort_list list="$order.$targetsL" sortbyvalue="if loop.element.class == class.sector then ('ZZZ ' + loop.element.knownname) else loop.element.knownname" />
+        <set_value name="$sourceStation" exact="$order.$sourceStation" />
+        <!--share_object_account object="$ship" otherobject="$sourceStation" transferto="$sourceStation" /-->
+        <remove_object_account object="$ship" transfer="false" />
+        <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Account: ' + $ship.hasownaccount + '/' + $ship.money" output="false" append="true" />
 
         <!-- Schiff leer machen, falls noch Ladung vorhanden -->
         <set_value name="$cargo" exact="$ship.cargo.list" />
@@ -172,13 +172,37 @@
           </do_all>
         </do_if>
 
-        <!-- Source und Target Stations ermitteln (als Targets können auch Sektoren angegeben werden) -->
-        <set_value name="$sourceStation" exact="$order.$sourceStation" />
-        <run_actions ref="GetStationsFromTargetList" result="$targetStations">
-          <param name="targets" value="if $ship.isclass.ship_s then $order.$targetsS else if $ship.isclass.ship_m then $order.$targetsM else $order.$targetsL" />
-          <param name="ship" value="$ship" />
-        </run_actions>
+        <!-- Target Stations ermitteln (als Targets können auch Sektoren angegeben werden) -->
+        <set_value name="$targetsInclHomeSector" exact="[$order.$sourceStation.sector]" />
+        <append_list_elements name="$targetsInclHomeSector" other="$order.$serviceArea" />
+        <append_list_elements name="$targetsInclHomeSector" other="$order.$targetStations" />
+        <do_if value="$ship.isclass.ship_s" comment="S-Schiffe werden aktuell nur im lokalen Sektor eingesetzt, für weitere Flüge sind sie i.d.R. zu ineffizient">
+          <run_actions ref="GetStationsFromTargetList" result="$targetStations">
+            <param name="targets" value="[$order.$sourceStation.sector]" />
+            <param name="ship" value="$ship" />
+            <param name="blacklist" value="[]" />
+          </run_actions>
+        </do_if>
+        <do_elseif value="$ship.isclass.ship_m">
+          <run_actions ref="GetStationsFromTargetList" result="$targetStations">
+            <param name="targets" value="$targetsInclHomeSector" />
+            <param name="ship" value="$ship" />
+            <param name="blacklist" value="$order.$blacklistM" />
+          </run_actions>
+        </do_elseif>
+        <do_elseif value="$ship.isclass.ship_l">
+          <run_actions ref="GetStationsFromTargetList" result="$targetStations">
+            <param name="targets" value="$targetsInclHomeSector" />
+            <param name="ship" value="$ship" />
+            <param name="blacklist" value="$order.$blacklistL" />
+          </run_actions>
+        </do_elseif>
+        <do_else>
+          <return />
+        </do_else>
+        <remove_from_list name="$targetStations" exact="$sourceStation" />
 
+        <!-- Aktuelle Delivery Liste ausgeben -->
         <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Deliveries:'" output="false" append="true" />
         <do_all exact="$deliveries.count" counter="$d">
           <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  '+$deliveries.{$d}" output="false" append="true" />
@@ -188,7 +212,7 @@
         <create_list name="$pushWares" />
         <append_list_elements name="$pushWares" other="$order.$sellWares" />
         <do_if value="$order.$sellPublicWares">
-          <find_sell_offer seller="$sourceStation" result="$sellOffers" multiple="true" usereservations="false" />
+          <find_sell_offer seller="$sourceStation" result="$sellOffers" tradepartner="$ship" multiple="true" usereservations="false" excludeempty="true" />
           <run_actions ref="GetPublicWaresFromOffers" result="$publicSellWares">
             <param name="tradeoffers" value="$sellOffers" />
           </run_actions>
@@ -199,28 +223,19 @@
         <create_list name="$pullWares" />
         <append_list_elements name="$pullWares" other="$order.$buyWares" />
         <do_if value="$order.$buyPublicWares">
-          <find_buy_offer buyer="$sourceStation" result="$buyOffers" multiple="true" usereservations="false" />
+          <find_buy_offer buyer="$sourceStation" result="$buyOffers" tradepartner="$ship" multiple="true" usereservations="false" excludeempty="true" />
           <run_actions ref="GetPublicWaresFromOffers" result="$publicBuyWares">
             <param name="tradeoffers" value="$buyOffers" />
           </run_actions>
           <append_list_elements name="$pullWares" other="$publicBuyWares" />
         </do_if>
 
-        <!-- Liste der Targets für Push-Trips zusammenstellen: Alle angegebenen Stationen, deren Build-Storages, sowie die Build-Storage der Home-Station -->
-        <create_list name="$pushTargets" />
-        <append_list_elements name="$pushTargets" other="$targetStations" />
-        <append_list_elements name="$pushTargets" other="if $sourceStation.buildstorage != null then [$sourceStation.buildstorage] else []" />
-        <do_all exact="$targetStations.count" counter="$idxTargetStation">
-          <set_value name="$targetStation" exact="$targetStations.{$idxTargetStation}" />
-          <append_list_elements name="$pushTargets" other="if $targetStation.buildstorage != null then [$targetStation.buildstorage] else []" />
-        </do_all>
-
         <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Checking push trades:'" output="false" append="true" />
         <run_actions ref="FindPossibleTrips" result="$pushTrips">
           <param name="ship" value="$ship" />
           <param name="order" value="$order" />
           <param name="providers" value="[$sourceStation]" />
-          <param name="receivers" value="$pushTargets" />
+          <param name="receivers" value="$targetStations" />
           <param name="tradewares" value="$pushWares" />
           <param name="deliveries" value="$deliveries" />
         </run_actions>
@@ -303,8 +318,10 @@
         <do_all exact="2" counter="$idx">
           <set_value name="$trip" exact="if $idx == 1 then $resultPushTrip else $resultPullTrip" />
           <do_if value="$trip != null">
-            <create_trade_order name="$providerOrder" object="$ship" tradeoffer="$trip.$providerOffer" amount="$trip.$amount" />
-            <create_trade_order name="$receiverOrder" object="$ship" tradeoffer="$trip.$receiverOffer" amount="$trip.$amount" />
+
+            <create_trade_order name="$providerOrder" object="$ship" tradeoffer="$trip.$providerOffer" amount="$trip.$amount" internal="true" />
+            <create_trade_order name="$receiverOrder" object="$ship" tradeoffer="$trip.$receiverOffer" amount="$trip.$amount" internal="true" />
+            
             <set_value name="$delivery" exact="table[
               $shipID = $ship.idcode,
               $timeScheduled = player.age,
@@ -348,19 +365,20 @@
       <actions>
 
         <!-- Provider, Receiver und Waren ausgeben -->
-        <do_all exact="$providers.count" counter="$idxProvider">
+        <!--<do_all exact="$providers.count" counter="$idxProvider">
           <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  Provider: ' + $providers.{$idxProvider}.knownname + ' ('+$providers.{$idxProvider}.idcode+')'" append="true" />
         </do_all>
         <do_all exact="$receivers.count" counter="$idxReceiver">
           <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  Receiver: ' + $receivers.{$idxReceiver}.knownname + ' ('+$receivers.{$idxReceiver}.idcode+')'" append="true" />
-        </do_all>
-        <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  Wares: ' + $tradewares" append="true" />
+        </do_all>-->
+        <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  Tradewares: ' + $tradewares" append="true" />
 
         <!-- Angebote des Provider-Warehouses ermitteln -->
         <get_ware_definition result="$allwares" flags="tradeware" />
         <create_list name="$providerOffers" />
         <do_all exact="$providers.count" counter="$idxProvider">
           <set_value name="$provider" exact="$providers.{$idxProvider}" />
+          <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  Provider: ' + $provider.knownname + ' ('+$provider.idcode+')'" append="true" />
           <set_value name="$wares" exact="if $provider.trueowner == faction.player then $allwares else $tradewares" />
           <do_if value="$wares.count gt 0">
             <find_sell_offer seller="$provider" result="$offers" multiple="true" usereservations="true" wares="$wares" tradepartner="$ship">
@@ -369,6 +387,9 @@
                 <match_use_blacklist object="$ship" group="blacklistgroup.civilian" type="blacklisttype.objectactivity" />
               </match_seller>
             </find_sell_offer>
+            <do_all exact="$offers.count" counter="$idxOffer">
+              <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'    ' + $offers.{$idxOffer}.ware + ' ('+$offers.{$idxOffer}.amount+'/'+$offers.{$idxOffer}.desiredamount+')'" append="true" />
+            </do_all>
             <append_list_elements name="$providerOffers" other="$offers" />
           </do_if>
         </do_all>
@@ -377,20 +398,18 @@
         <create_list name="$receiverOffers" />
         <do_all exact="$receivers.count" counter="$idxReceiver">
           <set_value name="$receiver" exact="$receivers.{$idxReceiver}" />
+          <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  Receiver: ' + $receiver.knownname + ' ('+$receiver.idcode+')'" append="true" />
           <set_value name="$wares" exact="if $receiver.trueowner == faction.player then $allwares else $tradewares" />
           <do_if value="$wares.count gt 0">
-            <find_buy_offer buyer="$receiver" result="$offers" multiple="true" usereservations="true" wares="$wares" tradepartner="$ship">
+            <find_buy_offer buyer="$receiver" result="$offers" multiple="true" usereservations="true" wares="$wares" tradepartner="$ship" excludeempty="false" comment="excludeempty, da Warehouses ohne Budget sonst nichts ankaufen können">
               <match_buyer>
                 <match_use_blacklist object="$ship" group="blacklistgroup.civilian" type="blacklisttype.sectortravel" />
                 <match_use_blacklist object="$ship" group="blacklistgroup.civilian" type="blacklisttype.objectactivity" />
               </match_buyer>
             </find_buy_offer>
-            <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  ' + $receiver.idcode + ': '+$offers.count + ' buy offers'" append="true" />
-            <do_if value="$receiver.idcode == 'VDP-170'">
-              <do_all exact="$offers.count" counter="$i">
-                <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  ' + $receiver.idcode + ': '+$offers.{$i}.ware.id + '/'+$offers.{$i}.amount" append="true" />
-              </do_all>
-            </do_if>
+            <do_all exact="$offers.count" counter="$idxOffer">
+              <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'    ' + $offers.{$idxOffer}.ware + ' ('+$offers.{$idxOffer}.amount+'/'+$offers.{$idxOffer}.desiredamount+')'" append="true" />
+            </do_all>
             <append_list_elements name="$receiverOffers" other="$offers" />
           </do_if>
         </do_all>
@@ -477,6 +496,18 @@
                 <!-- FIXME: $providerOffer.amount und $receiverOffer.amount wird hier absichtlich ignoriert, da die BuyOffers manchmal lächerlich geringe Mengen haben, wenn man nicht das volle Budget hat -->
                 <set_value name="$amount" exact="[[$shipCapacity, $equalizingAmount].min, 0].max" />
               </do_if>
+              <do_elseif value="$tripType == 'supply-build-storage'">
+                <set_value name="$amount" exact="[[$shipCapacity, $providerOffer.amount, $receiverOffer.desiredamount].min, 0].max" />
+              </do_elseif>
+              <do_elseif value="$provider.trueowner != faction.player">
+                <!-- Ankauf von Waren - hier berechnen wir die Einkaufsmenge selbst, denn die BuyOffers können aufgrund fehlender Stationsbudgets wesentlich zu niedrig sein -->
+                <!-- TODO: Nicht die ganze Kohle raushauen -->
+                <set_value name="$buyAmount" exact="[(player.money - 1000000Cr) / $receiverOffer.unitprice, $receiverOffer.desiredamount].min" />
+                <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Money = '+(player.money - 1000000Cr)" append="true" />
+                <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'BuyAmount = '+$buyAmount" append="true" />
+                <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'DesiredAmount = '+$receiverOffer.desiredamount" append="true" />
+                <set_value name="$amount" exact="[[$shipCapacity, $providerOffer.amount, $buyAmount].min, 0].max" />
+              </do_elseif>
               <do_else>
                 <set_value name="$amount" exact="[[$shipCapacity, $providerOffer.amount, $receiverOffer.amount].min, 0].max" />
               </do_else>
@@ -509,7 +540,7 @@
                 " />
               </do_if>
               <do_if value="$tripType == 'supply-build-storage'">
-                <set_value name="$rating" exact="$order.$prioBuild^2" comment="CargoUsage hier absichtlich nicht berücksichtigen, damit Build Storages immer bedient werden, auch wenn nur winzige Mengen fehlen"/>
+                <set_value name="$rating" exact="$order.$prioBuild^2" comment="CargoUsage hier absichtlich nicht berücksichtigen, damit Build Storages immer bedient werden, auch wenn nur winzige Mengen fehlen" />
               </do_if>
 
               <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  '
@@ -535,10 +566,10 @@
                   + ', cargoUsage = ' + '%.1s'.[100.0 * $cargoUsage] + '%'
                 " output="false" append="true" />
 
-                <do_if value="$rating le 0">
-                  <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Schlechtes Rating'" append="true" />
-                  <continue />
-                </do_if>
+              <do_if value="$rating le 0">
+                <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Schlechtes Rating'" append="true" />
+                <continue />
+              </do_if>
 
               <append_to_list name="$possibleTrips" exact="table[
                 $tripType = $tripType,  
@@ -564,46 +595,70 @@
       </actions>
     </library>
 
+    <library name="SeparateSectorsAndStations" purpose="run_actions" namespace="this">
+      <params>
+        <param name="targets" />
+      </params>
+      <actions>
+        <create_list name="$sectors" />
+        <create_list name="$stations" />
+        <do_all exact="$targets.count" counter="$idxTarget">
+          <set_value name="$target" exact="$targets.{$idxTarget}" />
+          <do_if value="$target.class == class.station">
+            <append_to_list name="$stations" exact="$target" />
+          </do_if>
+          <do_if value="$target.class == class.sector">
+            <append_to_list name="$sectors" exact="$target" />
+          </do_if>
+        </do_all>
+        <return value="table[$sectors = $sectors, $stations = $stations]" />
+      </actions>
+    </library>
+
     <library name="GetStationsFromTargetList" purpose="run_actions" namespace="this">
       <params>
-        <param name="targets" comment="Neue Targets, die hinzugefügt werden sollen; entweder vom Typ station oder sector" />
+        <param name="targets" comment="Targets vom Typ station oder sector" />
         <param name="ship" comment="Schiff, für das das Scheduling stattfindet; wird hier übergeben, damit man prüfen kann, ob ein Andocken überhaupt möglich ist" />
+        <param name="blacklist" comment="Optionale Liste von gesperrten Sektoren oder Stationen" />
       </params>
       <actions>
 
-        <create_list name="$result" />
-        <do_all exact="$targets.count" counter="$idxTarget">
-          <set_value name="$target" exact="$targets.{$idxTarget}" />
+        <!-- Targets und Blacklist nach Stations und Sectoren auftrennen -->
+        <run_actions ref="SeparateSectorsAndStations" result="$targetsSeparated">
+          <param name="targets" value="$targets" />
+        </run_actions>
+        <run_actions ref="SeparateSectorsAndStations" result="$blacklistSeparated">
+          <param name="targets" value="$blacklist" />
+        </run_actions>
 
-          <set_value name="$stations" exact="[]" />
-          <do_if value="$target.class == class.station">
-            <set_value name="$stations" exact="[$target]" />
-          </do_if>
-          <do_if value="$target.class == class.sector">
-            <find_station multiple="true" space="$target" name="$stations" owner="faction.player" negateownerfilter="true">
-              <match_relation_to object="$ship" relation="dock" comparison="ge" />
-              <match_use_blacklist group="blacklistgroup.civilian" type="blacklisttype.sectortravel" object="$ship" />
-              <match_use_blacklist group="blacklistgroup.civilian" type="blacklisttype.objectactivity" object="$ship" />
-            </find_station>
-          </do_if>
+        <!-- Liste der Target-Sektoren aufbauen; Blacklist anwenden -->
+        <create_list name="$targetSectors" />
+        <append_list_elements name="$targetSectors" other="$targetsSeparated.$sectors" />
+        <remove_from_list name="$targetSectors" list="$blacklistSeparated.$sectors" />
 
-          <do_all exact="$stations.count" counter="$idxStation">
-            <set_value name="$station" exact="$stations.{$idxStation}" />
-
-            <!-- Check if station already in list -->
-            <set_value name="$found" exact="false" />
-            <do_all exact="$result.count" counter="$idxResult">
-              <do_if value="$result.{$idxResult}.idcode == $station.idcode">
-                <set_value name="$found" exact="true" />
-                <break />
-              </do_if>
-            </do_all>
-            <do_if value="not $found">
-              <append_to_list name="$result" exact="$station" />
-            </do_if>
-          </do_all>
+        <!-- Alle Stationen in den Target-Sektoren ermitteln -->
+        <create_list name="$stationsInTargetSectors" />
+        <do_all exact="$targetSectors.count" counter="$idxTargetSector">
+          <set_value name="$targetSector" exact="$targetSectors.{$idxTargetSector}" />
+          <find_station multiple="true" space="$targetSector" name="$stationsInSector" active="true">
+            <match_relation_to object="$ship" relation="dock" comparison="ge" />
+            <match_use_blacklist group="blacklistgroup.civilian" type="blacklisttype.sectortravel" object="$ship" />
+            <match_use_blacklist group="blacklistgroup.civilian" type="blacklisttype.objectactivity" object="$ship" />
+          </find_station>
+          <append_list_elements name="$stationsInTargetSectors" other="$stationsInSector" />
+          <find_object class="class.buildstorage" multiple="true" space="$targetSector" name="$stationsInSector">
+            <match_relation_to object="$ship" relation="dock" comparison="ge" />
+            <match_use_blacklist group="blacklistgroup.civilian" type="blacklisttype.sectortravel" object="$ship" />
+            <match_use_blacklist group="blacklistgroup.civilian" type="blacklisttype.objectactivity" object="$ship" />
+          </find_object>
+          <append_list_elements name="$stationsInTargetSectors" other="$stationsInSector" />
         </do_all>
 
+        <!-- Endgültige Stationsliste zusammenstellen -->
+        <create_list name="$result" />
+        <append_list_elements name="$result" other="$targetsSeparated.$stations" />
+        <append_list_elements name="$result" other="$stationsInTargetSectors" />
+        <remove_from_list name="$result" list="$blacklistSeparated.$stations" />
         <return value="$result" />
       </actions>
     </library>
