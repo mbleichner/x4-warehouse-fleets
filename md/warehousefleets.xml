@@ -124,7 +124,7 @@
             <create_list name="$entriesToEvict" />
             <do_all exact="$deliveries.count" counter="$idxDelivery">
               <set_value name="$delivery" exact="$deliveries.{$idxDelivery}" />
-              <do_if value="$delivery.$timeFinished != null and $delivery.$timeFinished lt (player.age - 1800) or $delivery.$timeScheduled lt (player.age - 1800 + 1200)" comment="Annahme: jeder Flug ist nach spätestens 20min abgeschlossen">
+              <do_if value="$delivery.$timeFinished != null and $delivery.$timeFinished lt (player.age - 1200) or $delivery.$timeScheduled lt (player.age - 1800)" comment="Annahme: jeder Flug ist nach spätestens 30min abgeschlossen">
                 <append_to_list name="$entriesToEvict" exact="$delivery" />
               </do_if>
             </do_all>
@@ -321,7 +321,7 @@
 
             <create_trade_order name="$providerOrder" object="$ship" tradeoffer="$trip.$providerOffer" amount="$trip.$amount" internal="true" />
             <create_trade_order name="$receiverOrder" object="$ship" tradeoffer="$trip.$receiverOffer" amount="$trip.$amount" internal="true" />
-            
+
             <set_value name="$delivery" exact="table[
               $shipID = $ship.idcode,
               $timeScheduled = player.age,
@@ -378,6 +378,9 @@
         <create_list name="$providerOffers" />
         <do_all exact="$providers.count" counter="$idxProvider">
           <set_value name="$provider" exact="$providers.{$idxProvider}" />
+          <do_if value="$provider.class == class.buildstorage">
+            <continue comment="BuildStorages nie als Provider verwenden, die haben sowieso keine SellOffers" />
+          </do_if>
           <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  Provider: ' + $provider.knownname + ' ('+$provider.idcode+')'" append="true" />
           <set_value name="$wares" exact="if $provider.trueowner == faction.player then $allwares else $tradewares" />
           <do_if value="$wares.count gt 0">
@@ -470,7 +473,8 @@
               <do_all exact="$deliveries.count" counter="$idxDelivery">
                 <set_value name="$delivery" exact="$deliveries.{$idxDelivery}" />
                 <do_if value="$delivery.$wareID == $providerOffer.ware.id and $delivery.$timeFinished != null and $delivery.$providerID == $receiver.idcode and $delivery.$receiverID == $provider.idcode">
-                  <set_value name="$backpressure" exact="$backpressure + ($delivery.$amount * (1.0 - [player.age - $delivery.$timeFinished, 1800.0].min / 1800.0))" />
+                  <!--debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'XXX'" append="true" /-->
+                  <set_value name="$backpressure" exact="$backpressure + ($delivery.$amount * (1.0 - [player.age - $delivery.$timeFinished, 1200.0].min / 1200.0))" />
                 </do_if>
               </do_all>
 
@@ -486,6 +490,13 @@
               <set_value name="$receiverCargoRatio" exact="if $receiverCapacity gt 0
                 then [100.0 * ($receiverCargo  + $receiverReservations) / $receiverCapacity, 100.0].min
                 else 100.0" />
+
+              <!-- Profit berechnen und abbrechen, falls unrentabel -->
+              <set_value name="$profitRatio" exact="($receiverOffer.unitprice)f / ($providerOffer.unitprice)f - 1f" />
+              <do_if value="$tripType == 'trade' and $profitRatio le 0">
+                <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Profit negativ'" append="true" />
+                <continue />
+              </do_if>
 
               <!-- Bei Distribution Tripes die maximale sinnvolle Menge berechnen (es soll maximal soviel transportiert werden, dass die Mengen danach ausgeglichen sind) -->
               <do_if value="$tripType == 'distribution'">
@@ -516,14 +527,8 @@
                 <continue />
               </do_if>
 
-              <set_value name="$cargoUsage" exact="($amount)f / $shipCapacity" />
-              <set_value name="$profitRatio" exact="($receiverOffer.unitprice)f / ($providerOffer.unitprice)f - 1f" />
-              <do_if value="$tripType == 'trade' and $profitRatio le 0">
-                <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Profit negativ'" append="true" />
-                <continue />
-              </do_if>
-
               <!-- Rating berechnen (Höheres Rating = wichtigerer Trip) -->
+              <set_value name="$cargoUsage" exact="($amount)f / $shipCapacity" />
               <do_if value="$tripType == 'distribution'">
                 <!-- Bei einem Distribution Trip bewerten wir die Abweichung der Füllstände. Das Auffüllen besonders niedriger Stände wird bevorzugt -->
                 <set_value name="$rating" exact="(1.5 - $receiverCargoRatio / 100.0)^2 * ($providerCargoRatio - $receiverCargoRatio) * $cargoUsage * ($order.$prioDistribution/10f)" />
