@@ -70,7 +70,6 @@
     </order>
 
     <interrupts>
-        <!--
         <handler ref="SectorChangeHandler" />
         <handler ref="AttackHandler" />
         <handler ref="MissileLockHandler" />
@@ -81,14 +80,10 @@
         <handler ref="ResupplyHandler" />
         <handler ref="TargetInvalidHandler" />
         <handler ref="TideHandler" />
--->
     </interrupts>
 
     <init>
-        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'Konto vor init: ' + this.ship.money" output="false" append="true" />
         <set_order_syncpoint_reached order="this.assignedcontrolled.order" />
-        <!--share_object_account object="this.ship" otherobject="$sourceStation" transferto="$sourceStation" />
-        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'Konto nach init: ' + this.ship.money" output="false" append="true" /-->
     </init>
 
     <attention min="unknown">
@@ -114,9 +109,4 @@
             </do_while>
         </actions>
     </attention>
-
-    <on_abort>
-        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'on_abort'" output="false" append="true" />
-        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'Konto: ' + this.ship.money" output="false" append="true" />
-    </on_abort>
 </aiscript>
