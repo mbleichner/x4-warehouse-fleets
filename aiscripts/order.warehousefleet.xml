@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="32">
+<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="36">
 
     <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
         <params>
 
+            <!-- Source/Targets -->
             <param name="sourceStation" required="true" type="object" text="Home Warehouse">
-                <!-- TODO: Umbenennen -->
                 <input_param name="class" value="[class.station]" />
                 <input_param name="owner" value="this.ship.trueowner" />
             </param>
@@ -26,6 +26,14 @@
                 <input_param name="type" value="'object'" />
                 <input_param name="class" value="[class.station, class.sector]" />
             </param>
+
+            <param name="sellWares" type="list" default="[]" text="Sell Wares">
+                <input_param name="type" value="'ware'" />
+            </param>
+            <param name="buyWares" type="list" default="[]" text="Buy Wares">
+                <input_param name="type" value="'ware'" />
+            </param>
+            <param name="unrestrictedWares" type="bool" default="true" text="Trade Unrestricted Wares" />
 
             <param name="prioDistribution" default="5" type="number" text="Prio: Distribute">
                 <input_param name="min" value="0" />
@@ -51,18 +59,24 @@
                 <input_param name="min" value="0" />
                 <input_param name="max" value="90" />
             </param>
-            <param name="sellWares" type="list" default="[]" text="Sell Wares">
-                <input_param name="type" value="'ware'" />
+            <param name="accountThreshold" type="money" default="1000000Cr" text="Account Threshold (synced)">
+                <input_param name="min" value="0" />
+                <input_param name="max" value="100000000" />
             </param>
-            <param name="sellPublicWares" type="bool" default="true" text="Include public sell offers">
-                <input_param name="type" value="'ware'" />
+
+            <!-- 
+            <param name="saveSharedParams" type="bool" default="true" text="Save Shared Parameters">
+                <patch sinceversion="36" value="true" />
             </param>
-            <param name="buyWares" type="list" default="[]" text="Buy Wares">
-                <input_param name="type" value="'ware'" />
+            <param name="useSharedParams" type="bool" default="true" text="Use Shared Parameters">
+                <patch sinceversion="36" value="true" />
             </param>
-            <param name="buyPublicWares" type="bool" default="true" text="Include public buy offers">
-                <input_param name="type" value="'ware'" />
-            </param>
+            saveSharedParams = true,  useSharedParams = true  => Zu anderen Flotten syncen, die useSharedParams = true haben
+            saveSharedParams = true,  useSharedParams = false => Zu anderen Flotten syncen, die useSharedParams = true haben
+            saveSharedParams = false, useSharedParams = true  => Von einer anderen Flotte syncen, die saveSharedParams = true hat
+            saveSharedParams = false, useSharedParams = false => Nichts synchen
+            -->
+
         </params>
         <requires>
             <match shiptype="shiptype.lasertower" negate="true" />
@@ -92,7 +106,7 @@
             <!-- Scheduling versuchen -->
             <set_command command="command.searchtrades" />
             <set_command_action commandaction="commandaction.searchingtrades" />
-            <signal_objects object="player.entity" param="'RequestWarehouseFleetScheduling'" param2="this.ship" />
+            <signal_objects object="player.entity" param="'WarehouseFleets'" param2="'RequestScheduling'" param3="this.ship" />
 
             <!-- An Home Station docken -->
             <set_command_action commandaction="commandaction.docking" />
@@ -104,7 +118,7 @@
             <!-- Regelmäßig neue Schedulings versuchen -->
             <do_while value="true">
                 <set_command_action commandaction="commandaction.searchingtrades" />
-                <signal_objects object="player.entity" param="'RequestWarehouseFleetScheduling'" param2="this.ship" />
+                <signal_objects object="player.entity" param="'WarehouseFleets'" param2="'RequestScheduling'" param3="this.ship" />
                 <wait min="30s" max="60s" />
             </do_while>
         </actions>

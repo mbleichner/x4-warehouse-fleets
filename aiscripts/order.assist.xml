@@ -16,9 +16,11 @@
                 <param name="minCargoUsage" value="$order.$minCargoUsage" />
                 <param name="tradeGatePenalty" value="$order.$tradeGatePenalty" />
                 <param name="sellWares" value="$order.$sellWares" />
-                <param name="sellPublicWares" value="$order.$sellPublicWares" />
                 <param name="buyWares" value="$order.$buyWares" />
-                <param name="buyPublicWares" value="$order.$buyPublicWares" />
+                <param name="publicWares" value="$order.$publicWares" />
+                <param name="accountThreshold" value="$order.$accountThreshold" />
+                <param name="saveSharedParams" value="$order.$saveSharedParams" />
+                <param name="useSharedParams" value="$order.$useSharedParams" />
             </run_script>
         </do_if>
     </add>
