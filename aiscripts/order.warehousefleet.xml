@@ -4,7 +4,6 @@
     <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
         <params>
 
-            <!-- Source/Targets -->
             <param name="sourceStation" required="true" type="object" text="Home Warehouse">
                 <input_param name="class" value="[class.station]" />
                 <input_param name="owner" value="this.ship.trueowner" />
@@ -27,19 +26,11 @@
                 <input_param name="class" value="[class.station, class.sector]" />
             </param>
 
-            <param name="sellWares" type="list" default="[]" text="Sell Wares">
-                <input_param name="type" value="'ware'" />
+            <param name="minCargoUsage" default="80" type="number" text="Min. Cargo Usage (%)">
+                <input_param name="min" value="10" />
+                <input_param name="max" value="100" />
             </param>
-            <param name="buyWares" type="list" default="[]" text="Buy Wares">
-                <input_param name="type" value="'ware'" />
-            </param>
-            <param name="unrestrictedWares" type="bool" default="true" text="Trade Unrestricted Wares" />
-
             <param name="prioDistribution" default="5" type="number" text="Prio: Distribute">
-                <input_param name="min" value="0" />
-                <input_param name="max" value="10" />
-            </param>
-            <param name="prioTrade" default="5" type="number" text="Prio: Trade">
                 <input_param name="min" value="0" />
                 <input_param name="max" value="10" />
             </param>
@@ -47,35 +38,22 @@
                 <input_param name="min" value="0" />
                 <input_param name="max" value="10" />
             </param>
-            <param name="prioStorageVsProfit" default="5" type="number" text="Prio: Storage &lt;-&gt; Profit">
+            <param name="prioTrade" default="5" type="number" text="Prio: Trade">
                 <input_param name="min" value="0" />
                 <input_param name="max" value="10" />
             </param>
-            <param name="minCargoUsage" default="80" type="number" text="Min. Cargo Usage (%)">
-                <input_param name="min" value="10" />
-                <input_param name="max" value="100" />
+            <param name="prioStorageVsProfit" default="5" type="number" text="Trades: Storage &lt;-&gt; Profit">
+                <input_param name="min" value="0" />
+                <input_param name="max" value="10" />
             </param>
             <param name="tradeGatePenalty" default="20" type="number" text="Trades: Gate Penalty (%)">
                 <input_param name="min" value="0" />
                 <input_param name="max" value="90" />
             </param>
-            <param name="accountThreshold" type="money" default="1000000Cr" text="Account Threshold (synced)">
+            <param name="accountThreshold" type="money" default="1000000Cr" text="Account Threshold">
                 <input_param name="min" value="0" />
                 <input_param name="max" value="100000000" />
             </param>
-
-            <!-- 
-            <param name="saveSharedParams" type="bool" default="true" text="Save Shared Parameters">
-                <patch sinceversion="36" value="true" />
-            </param>
-            <param name="useSharedParams" type="bool" default="true" text="Use Shared Parameters">
-                <patch sinceversion="36" value="true" />
-            </param>
-            saveSharedParams = true,  useSharedParams = true  => Zu anderen Flotten syncen, die useSharedParams = true haben
-            saveSharedParams = true,  useSharedParams = false => Zu anderen Flotten syncen, die useSharedParams = true haben
-            saveSharedParams = false, useSharedParams = true  => Von einer anderen Flotte syncen, die saveSharedParams = true hat
-            saveSharedParams = false, useSharedParams = false => Nichts synchen
-            -->
 
         </params>
         <requires>
