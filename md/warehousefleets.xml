@@ -552,7 +552,7 @@
               </do_elseif>
               <do_elseif value="$provider.trueowner != faction.player">
                 <!-- Ankauf von Waren - hier berechnen wir die Einkaufsmenge selbst, denn die BuyOffers können aufgrund fehlender Stationsbudgets wesentlich zu niedrig sein -->
-                <set_value name="$buyAmount" exact="[(player.money - $order.$accountThreshold)i / ($receiverOffer.unitprice)i, $receiverOffer.desiredamount].min" />
+                <set_value name="$buyAmount" exact="[(player.money - $order.$accountThreshold)L / ($receiverOffer.unitprice)i, $receiverOffer.desiredamount].min" />
                 <set_value name="$amount" exact="[[$shipCapacity, $providerOffer.amount, $buyAmount].min, 0].max" />
               </do_elseif>
               <do_else>
