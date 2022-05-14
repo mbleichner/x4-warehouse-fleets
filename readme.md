@@ -12,6 +12,10 @@ It introduces the WarehouseFleet behaviour, which serves the following purposes:
 
 *Disclaimer: this is my first X4 mod and it isn't fully tested yet, so use at your own risk - I'll gladly help if you stumble over any problems though. Once it is properly tested, I will probably publish it on Steam and Nexus.*
 
+## Installation
+
+Just take the whole source folder and put it into your X4 extensions folder.
+
 ## Intended Use
 
 The mod allows to create a network of warehouses across the galaxy, which will ultimately behave like a single giant shared storage. Arbitrary refineries and factories can be built along this network and will feed from its resources and provide their own products back into the network.
