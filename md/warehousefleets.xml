@@ -218,6 +218,11 @@
         </do_if>
 
         <set_value name="$sourceStation" exact="$order.$sourceStation" />
+        <do_if value="$sourceStation.money gt 200000Cr">
+          <set_value name="$moneyToTransfer" exact="$sourceStation.money" />
+          <write_to_logbook category="upkeep" object="$sourceStation" title="'Warehouse Account'" money="$moneyToTransfer" text="'Transferring credits from ' + $sourceStation.knownname +' (' + $sourceStation.idcode + ')'" />
+          <transfer_money from="$sourceStation" to="faction.player" amount="$moneyToTransfer" />
+        </do_if>
 
         <!-- Schiff leer machen, falls noch Ladung vorhanden -->
         <set_value name="$cargo" exact="$ship.cargo.list" />
@@ -453,6 +458,21 @@
           </do_if>
         </do_all>
 
+        <!-- Berechne Reservierungen -->
+        <set_value name="$reservations" exact="table[]" />
+        <do_for_each in="$deliveries" name="$delivery">
+          <set_value name="$providerKey" exact="'$' + $delivery.$providerID + '/' + $delivery.$wareID" />
+          <set_value name="$receiverKey" exact="'$' + $delivery.$receiverID + '/' + $delivery.$wareID" />
+          <do_if value="$delivery.$providerOrder.exists">
+            <set_value operation="subtract" name="$reservations.{$providerKey}" exact="$delivery.$amount" />
+          </do_if>
+          <do_if value="$delivery.$receiverOrder.exists">
+            <set_value operation="add" name="$reservations.{$receiverKey}" exact="$delivery.$amount" />
+          </do_if>
+        </do_for_each>
+
+        <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="'  reservations: ' + $reservations" append="true" />
+
         <create_list name="$possibleTrips" />
         <do_for_each in="$providerOffers" name="$providerOffer">
           <do_for_each in="$receiverOffers" name="$receiverOffer">
@@ -499,34 +519,21 @@
                 </do_if>
               </do_if>
 
-              <!-- Berechne Reservierungen an der Provider-Station -->
-              <set_value name="$providerReservations" exact="0" />
-              <do_all exact="$deliveries.count" counter="$idxDelivery">
-                <set_value name="$delivery" exact="$deliveries.{$idxDelivery}" />
-                <do_if value="$delivery.$wareID == $providerOffer.ware.id">
-                  <set_value name="$providerReservations" exact="$providerReservations - (if $delivery.$providerID == $provider.idcode and $delivery.$providerOrder.exists then $delivery.$amount else 0)" />
-                  <set_value name="$providerReservations" exact="$providerReservations + (if $delivery.$receiverID == $provider.idcode and $delivery.$receiverOrder.exists then $delivery.$amount else 0)" />
-                </do_if>
-              </do_all>
-
-              <!-- Berechne Reservierungen an der Receiver-Station -->
-              <set_value name="$receiverReservations" exact="0" />
-              <do_all exact="$deliveries.count" counter="$idxDelivery">
-                <set_value name="$delivery" exact="$deliveries.{$idxDelivery}" />
-                <do_if value="$delivery.$wareID == $providerOffer.ware.id">
-                  <set_value name="$receiverReservations" exact="$receiverReservations - (if $delivery.$providerID == $receiver.idcode and $delivery.$providerOrder.exists then $delivery.$amount else 0)" />
-                  <set_value name="$receiverReservations" exact="$receiverReservations + (if $delivery.$receiverID == $receiver.idcode and $delivery.$receiverOrder.exists then $delivery.$amount else 0)" />
-                </do_if>
-              </do_all>
+              <!-- Reservations ermitteln -->
+              <set_value name="$providerKey" exact="'$' + $provider.idcode + '/' + $providerOffer.ware.id" />
+              <set_value name="$receiverKey" exact="'$' + $receiver.idcode + '/' + $receiverOffer.ware.id" />
+              <set_value name="$providerReservations" exact="@$reservations.{$providerKey} + 0" />
+              <set_value name="$receiverReservations" exact="@$reservations.{$receiverKey} + 0" />
 
               <!-- Berechne Backpressure: Anzahl der Waren, die kürzlich in entgegengesetzter Richtung transportiert werden, gewichtet mit der Dauer seit des Transports -->
               <set_value name="$backpressure" exact="0" />
-              <do_all exact="$deliveries.count" counter="$idxDelivery">
-                <set_value name="$delivery" exact="$deliveries.{$idxDelivery}" />
-                <do_if value="$delivery.$wareID == $providerOffer.ware.id and $delivery.$timeFinished != null and $delivery.$providerID == $receiver.idcode and $delivery.$receiverID == $provider.idcode">
-                  <set_value name="$backpressure" exact="$backpressure + ($delivery.$amount * (1.0 - [player.age - $delivery.$timeFinished, 1200.0].min / 1200.0))" />
-                </do_if>
-              </do_all>
+              <do_if value="$tripType == 'distribution'">
+                <do_for_each in="$deliveries" name="$delivery">
+                  <do_if value="$delivery.$wareID == $providerOffer.ware.id and $delivery.$timeFinished != null and $delivery.$providerID == $receiver.idcode and $delivery.$receiverID == $provider.idcode">
+                    <set_value name="$backpressure" exact="$backpressure + ($delivery.$amount * (1.0 - [player.age - $delivery.$timeFinished, 1200.0].min / 1200.0))" />
+                  </do_if>
+                </do_for_each>
+              </do_if>
 
               <set_value name="$providerCargo" exact="$provider.cargo.{$providerOffer.ware}.count" />
               <set_value name="$receiverCargo" exact="$receiver.cargo.{$receiverOffer.ware}.count" />
