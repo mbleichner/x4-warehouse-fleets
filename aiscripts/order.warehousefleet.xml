@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="36">
+<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="37">
 
     <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
         <params>
@@ -8,25 +8,20 @@
                 <input_param name="class" value="[class.station]" />
                 <input_param name="owner" value="this.ship.trueowner" />
             </param>
-            <param name="targetStations" type="list" default="[]" text="Adjacent Warehouses">
+            <param name="targets" type="list" default="[$sourceStation.sector]" text="Targets">
                 <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station]" />
-                <input_param name="owner" value="this.ship.trueowner" />
+                <!--<input_param name="class" value="[class.station, class.sector]" />-->
             </param>
-            <param name="serviceArea" type="list" default="[]" text="Service Area">
+            <param name="targetsL" type="list" default="[]" text="Targets (L)">
                 <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station, class.sector]" />
+                <!--<input_param name="class" value="[class.station, class.sector]" />-->
             </param>
-            <param name="blacklistM" type="list" default="[]" text="Blacklist (M)">
+            <param name="targetsM" type="list" default="[]" text="Targets (M)">
                 <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station, class.sector]" />
-            </param>
-            <param name="blacklistL" type="list" default="[]" text="Blacklist (L)">
-                <input_param name="type" value="'object'" />
-                <input_param name="class" value="[class.station, class.sector]" />
+                <!--<input_param name="class" value="[class.station, class.sector]" />-->
             </param>
 
-            <param name="minCargoUsage" default="80" type="number" text="Min. Cargo Usage (%)">
+            <param name="minCargoUsage" default="50" type="number" text="Min. Cargo Usage (%)">
                 <input_param name="min" value="10" />
                 <input_param name="max" value="100" />
             </param>
@@ -39,10 +34,6 @@
                 <input_param name="max" value="10" />
             </param>
             <param name="prioTrade" default="5" type="number" text="Prio: Trade">
-                <input_param name="min" value="0" />
-                <input_param name="max" value="10" />
-            </param>
-            <param name="prioStorageVsProfit" default="5" type="number" text="Trades: Storage &lt;-&gt; Profit">
                 <input_param name="min" value="0" />
                 <input_param name="max" value="10" />
             </param>

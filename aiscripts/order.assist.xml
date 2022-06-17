@@ -5,14 +5,12 @@
             <set_value name="$added" />
             <run_script name="$scriptname">
                 <param name="sourceStation" value="$order.$sourceStation" />
-                <param name="targetStations" value="$order.$targetStations" />
-                <param name="serviceArea" value="$order.$serviceArea" />
-                <param name="blacklistM" value="$order.$blacklistM" />
-                <param name="blacklistL" value="$order.$blacklistL" />
+                <param name="targets" value="$order.$targets" />
+                <param name="targetsM" value="$order.$targetsM" />
+                <param name="targetsL" value="$order.$targetsL" />
                 <param name="prioDistribution" value="$order.$prioDistribution" />
                 <param name="prioTrade" value="$order.$prioTrade" />
                 <param name="prioBuild" value="$order.$prioBuild" />
-                <param name="prioStorageVsProfit" value="$order.$prioStorageVsProfit" />
                 <param name="minCargoUsage" value="$order.$minCargoUsage" />
                 <param name="tradeGatePenalty" value="$order.$tradeGatePenalty" />
                 <param name="accountThreshold" value="$order.$accountThreshold" />
