@@ -50,9 +50,9 @@
                 <input_param name="min" value="0" />
                 <input_param name="max" value="90" />
             </param>
-            <param name="accountThreshold" type="money" default="1000000Cr" text="Account Threshold">
+            <param name="accountThreshold" type="number" default="1" text="Account Threshold (Million)">
                 <input_param name="min" value="0" />
-                <input_param name="max" value="100000000" />
+                <input_param name="max" value="100" />
             </param>
 
         </params>

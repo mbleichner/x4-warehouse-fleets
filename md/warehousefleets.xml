@@ -281,7 +281,7 @@
         </run_actions>
 
         <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="'Checking push trades:'" output="false" append="true" />
-        <run_actions ref="FindPossibleTrips" result="$pushTrips">
+        <run_actions ref="FindPossibleTransports" result="$pushTransports">
           <param name="ship" value="$ship" />
           <param name="order" value="$order" />
           <param name="providers" value="[$sourceStation]" />
@@ -291,7 +291,7 @@
         </run_actions>
 
         <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="'Checking pull trades:'" output="false" append="true" />
-        <run_actions ref="FindPossibleTrips" result="$pullTrips">
+        <run_actions ref="FindPossibleTransports" result="$pullTransports">
           <param name="ship" value="$ship" />
           <param name="order" value="$order" />
           <param name="providers" value="$targetStations" />
@@ -300,21 +300,21 @@
           <param name="deliveries" value="$deliveries" />
         </run_actions>
 
-        <set_value name="$bestPushTrip" exact="null" />
-        <do_for_each in="$pushTrips" name="$pushTrip">
-          <do_if value="$pushTrip.$tripType == 'supply-build-storage' or ($pushTrip.$cargoUsage * 100f) ge $order.$minCargoUsage">
-            <set_value name="$bestPushTrip" exact="$pushTrip" />
-            <break />
-          </do_if>
-        </do_for_each>
+        <run_actions ref="AssembleTrip" result="$bestPushTrip">
+          <param name="ship" value="$ship" />
+          <param name="order" value="$order" />
+          <param name="possibleTransports" value="$pushTransports" />
+          <param name="provider" value="null" />
+          <param name="receiver" value="null" />
+        </run_actions>
 
-        <set_value name="$bestPullTrip" exact="null" />
-        <do_for_each in="$pullTrips" name="$pullTrip">
-          <do_if value="$pullTrip.$tripType == 'supply-build-storage' or ($pullTrip.$cargoUsage * 100f) ge $order.$minCargoUsage">
-            <set_value name="$bestPullTrip" exact="$pullTrip" />
-            <break />
-          </do_if>
-        </do_for_each>
+        <run_actions ref="AssembleTrip" result="$bestPullTrip">
+          <param name="ship" value="$ship" />
+          <param name="order" value="$order" />
+          <param name="possibleTransports" value="$pullTransports" />
+          <param name="provider" value="null" />
+          <param name="receiver" value="null" />
+        </run_actions>
 
         <do_if value="$bestPushTrip == null and $bestPullTrip == null">
           <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="'No trade found that meets minimum cargo usage requirement'" output="false" append="true" />
@@ -339,27 +339,27 @@
           <set_value name="$resultPullTrip" exact="null" />
         </do_elseif>
 
-        <!-- Fall 3: PushTrip schedulen; dazu erstbesten passenden PullTrip (mit anderer Ware) auswählen -->
+        <!-- Fall 3: PushTrip schedulen; dazu erstbesten passenden PullTrip auswählen -->
         <do_elseif value="$bestPushTrip != null and $bestPullTrip != null and $bestPushTrip.$rating ge $bestPullTrip.$rating">
           <set_value name="$resultPushTrip" exact="$bestPushTrip" />
-          <do_all exact="$pullTrips.count" counter="$idxPullTrip">
-            <set_value name="$pullTrip" exact="$pullTrips.{$idxPullTrip}" />
-            <do_if value="$pullTrip.$provider.idcode == $bestPushTrip.$receiver.idcode and $pullTrip.$ware.id != $bestPushTrip.$ware.id and $pullTrip.$cargoUsage ge 0.1">
-              <set_value name="$resultPullTrip" exact="$pullTrip" />
-              <break />
-            </do_if>
-          </do_all>
+          <run_actions ref="AssembleTrip" result="$resultPullTrip">
+            <param name="ship" value="$ship" />
+            <param name="order" value="$order" />
+            <param name="possibleTransports" value="$pullTransports" />
+            <param name="provider" value="$bestPushTrip.$receiver" />
+            <param name="receiver" value="$bestPushTrip.$provider" />
+          </run_actions>
         </do_elseif>
 
-        <!-- Fall 4: PullTrip schedulen; dazu erstbesten passenden PushTrip (mit anderer Ware) auswählen -->
+        <!-- Fall 4: PullTrip schedulen; dazu erstbesten passenden PushTrip auswählen -->
         <do_elseif value="$bestPushTrip != null and $bestPullTrip != null and $bestPushTrip.$rating lt $bestPullTrip.$rating">
-          <do_all exact="$pushTrips.count" counter="$idxPushTrip">
-            <set_value name="$pushTrip" exact="$pushTrips.{$idxPushTrip}" />
-            <do_if value="$pushTrip.$receiver.idcode == $bestPullTrip.$provider.idcode and $pushTrip.$ware.id != $bestPullTrip.$ware.id and $pushTrip.$cargoUsage ge 0.1">
-              <set_value name="$resultPushTrip" exact="$pushTrip" />
-              <break />
-            </do_if>
-          </do_all>
+          <run_actions ref="AssembleTrip" result="$resultPushTrip">
+            <param name="ship" value="$ship" />
+            <param name="order" value="$order" />
+            <param name="possibleTransports" value="$pushTransports" />
+            <param name="provider" value="$bestPullTrip.$receiver" />
+            <param name="receiver" value="$bestPullTrip.$provider" />
+          </run_actions>
           <set_value name="$resultPullTrip" exact="$bestPullTrip" />
         </do_elseif>
 
@@ -370,28 +370,54 @@
           <set_value name="$trip" exact="if $idx == 1 then $resultPushTrip else $resultPullTrip" />
           <do_if value="$trip != null">
 
-            <create_trade_order name="$providerOrder" object="$ship" tradeoffer="$trip.$providerOffer" amount="$trip.$amount" internal="true" />
-            <create_trade_order name="$receiverOrder" object="$ship" tradeoffer="$trip.$receiverOffer" amount="$trip.$amount" internal="true" />
+            <!-- Delivery-Objekte erzeugen (providerOrder und receiverOrder werden später gefüllt) -->
+            <create_list name="$newDeliveries" />
+            <do_all exact="$trip.$wares.count" counter="$idxWare">
+              <set_value name="$ware" exact="$trip.$wares.{$idxWare}" />
+              <set_value name="$delivery" exact="table[
+                $shipID = $ship.idcode,
+                $timeScheduled = player.age,
+                $timeFinished = null,
+                $wareID = $ware.$receiverOffer.ware.id,
+                $amount = $ware.$amount,
+                $providerID = $trip.$provider.idcode,
+                $receiverID = $trip.$receiver.idcode,
+                $providerOrder = null,
+                $receiverOrder = null,
+              ]" />
+              <append_to_list name="$newDeliveries" exact="$delivery" />
+              <append_to_list name="$deliveries" exact="$delivery" />
+            </do_all>
 
-            <set_value name="$delivery" exact="table[
-              $shipID = $ship.idcode,
-              $timeScheduled = player.age,
-              $timeFinished = null,
-              $wareID = $trip.$receiverOffer.ware.id,
-              $amount = $trip.$amount,
-              $providerID = $trip.$provider.idcode,
-              $receiverID = $trip.$receiver.idcode,
-              $providerOrder = $providerOrder,
-              $receiverOrder = $receiverOrder,
-            ]" />
-            <append_to_list name="$deliveries" exact="$delivery" />
-            <debug_to_file chance="global.$debugchance" name="'scheduler'" directory="'WarehouseFleets'" text="'Added delivery: ' + $delivery" output="false" append="true" />
-            <signal_cue_instantly cue="UpdateDeliveryOnOrderCompletion" param="table[$ship = $ship, $delivery = $delivery, $order = $receiverOrder]" />
+            <!-- Einkauf-Trade-Orders erzeugen -->
+            <do_all exact="$trip.$wares.count" counter="$idxWare">
+              <set_value name="$ware" exact="$trip.$wares.{$idxWare}" />
+              <set_value name="$delivery" exact="$newDeliveries.{$idxWare}" />
+              <create_trade_order name="$providerOrder" object="$ship" tradeoffer="$ware.$providerOffer" amount="$ware.$amount" />
+              <set_value name="$delivery.$providerOrder" exact="$providerOrder" />
+            </do_all>
+
+            <!-- Verkauf-Trade-Orders erzeugen -->
+            <do_all exact="$trip.$wares.count" counter="$idxWare">
+              <set_value name="$ware" exact="$trip.$wares.{$idxWare}" />
+              <set_value name="$delivery" exact="$newDeliveries.{$idxWare}" />
+              <create_trade_order name="$receiverOrder" object="$ship" tradeoffer="$ware.$receiverOffer" amount="$ware.$amount" />
+              <set_value name="$delivery.$receiverOrder" exact="$receiverOrder" />
+            </do_all>
+
+            <!-- Loggen und OrderCompletion-Listener registrieren -->
+            <do_all exact="$trip.$wares.count" counter="$idxWare">
+              <set_value name="$ware" exact="$trip.$wares.{$idxWare}" />
+              <set_value name="$delivery" exact="$newDeliveries.{$idxWare}" />
+              <debug_to_file chance="global.$debugchance" name="'scheduler'" directory="'WarehouseFleets'" text="'Added delivery: ' + $delivery" output="false" append="true" />
+              <signal_cue_instantly cue="UpdateDeliveryOnOrderCompletion" param="table[$ship = $ship, $delivery = $delivery, $order = $delivery.$receiverOrder]" />
+            </do_all>
+
           </do_if>
         </do_all>
 
-        <!-- Wenn der Roundtrip nicht an der Home-Station endet => Rückflug ordern -->
-        <do_if value="$delivery.$receiverID != $sourceStation.idcode and $delivery.$receiverID != @$sourceStation.buildstorage.idcode">
+        <!-- Wenn der Roundtrip nicht an der Home-Station endet => Rückflug-Order erzeugen -->
+        <do_if value="$resultPullTrip == null or $resultPullTrip.$receiverID != @$sourceStation.buildstorage.idcode">
           <create_order object="$ship" id="'ReturnToWarehouse'">
             <param name="destination" value="$sourceStation" />
           </create_order>
@@ -401,7 +427,7 @@
     </library>
 
     <!-- Library-Funktion, die mögliche Tradeoffers für gegebene Stationen ermittelt -->
-    <library name="FindPossibleTrips" purpose="run_actions">
+    <library name="FindPossibleTransports" purpose="run_actions">
       <params>
         <param name="ship" />
         <param name="order" />
@@ -473,40 +499,29 @@
 
         <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="'  reservations: ' + $reservations" append="true" />
 
-        <create_list name="$possibleTrips" />
+        <create_list name="$possibleTransports" />
         <do_for_each in="$providerOffers" name="$providerOffer">
           <do_for_each in="$receiverOffers" name="$receiverOffer">
             <do_if value="$providerOffer.ware.id == $receiverOffer.ware.id">
               <set_value name="$provider" exact="$providerOffer.owner" />
               <set_value name="$receiver" exact="$receiverOffer.owner" />
-              <set_value name="$tripType" exact="
+              <set_value name="$transportType" exact="
                 if $receiver.trueowner == faction.player and $receiver.class == class.buildstorage then 'supply-build-storage'
                 else if $provider.trueowner == faction.player and $receiver.trueowner == faction.player then 'distribution'
                 else 'trade'
               " />
 
               <!-- Kapazität des Schiffs berechnen -->
-              <do_if value="$providerOffer.ware.waretransport" exact="waretransport.container">
-                <set_value name="$shipCapacity" exact="$ship.cargo.capacity.container / $providerOffer.ware.volume" />
-              </do_if>
-              <do_elseif value="$providerOffer.ware.waretransport" exact="waretransport.liquid">
-                <set_value name="$shipCapacity" exact="$ship.cargo.capacity.liquid / $providerOffer.ware.volume" />
-              </do_elseif>
-              <do_elseif value="$providerOffer.ware.waretransport" exact="waretransport.solid">
-                <set_value name="$shipCapacity" exact="$ship.cargo.capacity.solid / $providerOffer.ware.volume" />
-              </do_elseif>
-              <do_else>
-                <continue comment="Schiff kann die Ware nicht transportieren" />
-              </do_else>
+              <set_value name="$shipCapacityForWare" exact="$ship.cargo.capacity.container / $providerOffer.ware.volume" />
 
               <!-- Unprofitable Trades kann man hier schon erkennen und abbrechen -->
               <set_value name="$profitRatio" exact="($receiverOffer.unitprice)f / ($providerOffer.unitprice)f - 1f" comment="Wertebereich ca. (-1, +1)" />
-              <do_if value="$tripType == 'trade' and $profitRatio le 0">
+              <do_if value="$transportType == 'trade' and $profitRatio le 0.05">
                 <continue />
               </do_if>
 
-              <!-- Bei Trade Trips prüfen, ob das eigene Buy/Sell Offer Restriktionen hat und diese berücksichtigen -->
-              <do_if value="$tripType == 'trade'">
+              <!-- Bei Trade Transports prüfen, ob das eigene Buy/Sell Offer Restriktionen hat und diese berücksichtigen -->
+              <do_if value="$transportType == 'trade'">
                 <set_value name="$sourceOffer" exact="if $provider.idcode == $order.$sourceStation.idcode then $providerOffer else $receiverOffer" />
                 <set_value name="$targetStation" exact="if $provider.idcode == $order.$sourceStation.idcode then $receiverOffer.owner else $providerOffer.owner" />
                 <set_value name="$allowed" exact="if not $sourceOffer.restriction.inverted 
@@ -527,7 +542,7 @@
 
               <!-- Berechne Backpressure: Anzahl der Waren, die kürzlich in entgegengesetzter Richtung transportiert werden, gewichtet mit der Dauer seit des Transports -->
               <set_value name="$backpressure" exact="0" />
-              <do_if value="$tripType == 'distribution'">
+              <do_if value="$transportType == 'distribution'">
                 <do_for_each in="$deliveries" name="$delivery">
                   <do_if value="$delivery.$wareID == $providerOffer.ware.id and $delivery.$timeFinished != null and $delivery.$providerID == $receiver.idcode and $delivery.$receiverID == $provider.idcode">
                     <set_value name="$backpressure" exact="$backpressure + ($delivery.$amount * (1.0 - [player.age - $delivery.$timeFinished, 1200.0].min / 1200.0))" />
@@ -546,45 +561,45 @@
                 then [[100.0 * ($receiverCargo  + $receiverReservations) / $receiverCapacity, 100.0].min, 0.0].max
                 else 100.0" />
 
-              <!-- Bei Distribution Tripes die maximale sinnvolle Menge berechnen (es soll maximal soviel transportiert werden, dass die Mengen danach ausgeglichen sind) -->
-              <do_if value="$tripType == 'distribution'">
+              <!-- Bei Distribution Transportes die maximale sinnvolle Menge berechnen (es soll maximal soviel transportiert werden, dass die Mengen danach ausgeglichen sind) -->
+              <do_if value="$transportType == 'distribution'">
                 <set_value name="$equalizingAmount" exact="(
                   ($providerCargo + $providerReservations) * (($receiverCapacity)LF / ($providerCapacity + $receiverCapacity))
                 - ($receiverCargo + $receiverReservations) * (($providerCapacity)LF / ($providerCapacity + $receiverCapacity))
                 )i" />
-                <set_value name="$amount" exact="[[$shipCapacity, $equalizingAmount].min, 0].max" />
+                <set_value name="$amount" exact="[[$shipCapacityForWare, $equalizingAmount].min, 0].max" />
               </do_if>
-              <do_elseif value="$tripType == 'supply-build-storage'">
-                <set_value name="$amount" exact="[[$shipCapacity, $providerOffer.amount, $receiverOffer.desiredamount].min, 0].max" />
+              <do_elseif value="$transportType == 'supply-build-storage'">
+                <set_value name="$amount" exact="[[$shipCapacityForWare, $providerOffer.amount, $receiverOffer.desiredamount].min, 0].max" />
               </do_elseif>
               <do_elseif value="$provider.trueowner != faction.player">
                 <!-- Ankauf von Waren - hier berechnen wir die Einkaufsmenge selbst, denn die BuyOffers können aufgrund fehlender Stationsbudgets wesentlich zu niedrig sein -->
-                <set_value name="$buyAmount" exact="[(player.money - $order.$accountThreshold)L / ($receiverOffer.unitprice)i, $receiverOffer.desiredamount].min" />
-                <set_value name="$amount" exact="[[$shipCapacity, $providerOffer.amount, $buyAmount].min, 0].max" />
+                <set_value name="$buyAmount" exact="[(player.money - $order.$accountThreshold * 1000000Cr)L / ($receiverOffer.unitprice)i, $receiverOffer.desiredamount].min" />
+                <set_value name="$amount" exact="[[$shipCapacityForWare, $providerOffer.amount, $buyAmount].min, 0].max" />
               </do_elseif>
               <do_else>
-                <set_value name="$amount" exact="[[$shipCapacity, $providerOffer.amount, $receiverOffer.amount].min, 0].max" />
+                <set_value name="$amount" exact="[[$shipCapacityForWare, $providerOffer.amount, $receiverOffer.amount].min, 0].max" />
               </do_else>
 
-              <set_value name="$cargoUsage" exact="($amount)f / $shipCapacity" />
-              <do_if value="$tripType == 'distribution'">
-                <set_value name="$rating" exact="($providerCargoRatio - $receiverCargoRatio) * (1.0 - $receiverCargoRatio/200.0) * $cargoUsage * ($order.$prioDistribution/10f)" />
+              <set_value name="$cargoUsage" exact="($amount)f / $shipCapacityForWare" />
+              <do_if value="$transportType == 'distribution'">
+                <set_value name="$importance" exact="($providerCargoRatio - $receiverCargoRatio) * (1.0 - $receiverCargoRatio/200.0) * ($order.$prioDistribution/10f)" />
               </do_if>
-              <do_if value="$tripType == 'trade'">
-                <set_value name="$storageLevelRating" exact="if $provider.idcode == $order.$sourceStation.idcode then $providerCargoRatio else (100f - $receiverCargoRatio)" />
+              <do_if value="$transportType == 'trade'">
+                <set_value name="$storageLevelRating" exact="[[if $provider.idcode == $order.$sourceStation.idcode then $providerCargoRatio else (100f - $receiverCargoRatio), 100.0].min, 0.0].max" />
                 <set_value name="$gd" exact="$provider.gatedistance.{$receiver}.{blacklistgroup.civilian}.{$ship}" />
-                <set_value name="$rating" exact="[100f * $profitRatio * $cargoUsage, 0].max ^ ($order.$prioStorageVsProfit/10f)
-                  * $storageLevelRating ^ (1f-$order.$prioStorageVsProfit/10f)
-                  * ($order.$tradeGatePenalty/100f) ^ $gd
-                  * ($order.$prioTrade/10f)" />
+                <set_value name="$importance" exact="[100f * $profitRatio, 0].max * $storageLevelRating * ($order.$prioTrade/10f)" />
               </do_if>
-              <do_if value="$tripType == 'supply-build-storage'">
-                <set_value name="$rating" exact="(1.0 - $receiverCargoRatio/200.0) * $order.$prioBuild^2" />
+              <do_if value="$transportType == 'supply-build-storage'">
+                <set_value name="$importance" exact="(1.0 - $receiverCargoRatio/200.0) * $order.$prioBuild^2" />
               </do_if>
 
+              <set_value name="$rating" exact="$importance * $amount * $providerOffer.ware.volume" />
+
               <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="'  '
-                  + '[' + $tripType + ' ' + $provider.idcode + ' -> ' + $receiver.idcode + ' ' + $providerOffer.ware + '] '
-                  + 'rating = ' + '%.3s'.[$rating]
+                  + '[' + $transportType + ' ' + $provider.idcode + ' -> ' + $receiver.idcode + ' ' + $providerOffer.ware + '] '
+                  + 'importance = ' + '%.3s'.[$importance]
+                  + ', rating = ' + '%.3s'.[$rating]
                   + ', %.1s'.[$providerCargoRatio] + '% -> ' + '%.1s'.[$receiverCargoRatio] + '%'
                   + ', providerCargo = ' + $providerCargo
                   + ', providerReservations = ' + $providerReservations
@@ -595,18 +610,23 @@
                   + ', sellAmount = ' + $providerOffer.amount
                   + ', buyAmount = ' + $receiverOffer.amount
                   + ', equalizingAmount = ' + @$equalizingAmount
-                  + ', shipCapacity = ' + $shipCapacity
+                  + ', shipCapacityForWare = ' + $shipCapacityForWare
                   + ', amount = ' + $amount
                   + ', gd = ' + @$gd
                   + ', cargoUsage = ' + '%.1s'.[100.0 * $cargoUsage] + '%'
                 " output="false" append="true" />
 
-              <do_if value="$amount le 0 or $rating le 0">
-                <continue />
+              <do_if value="$amount * $providerOffer.ware.volume lt 0.1 * $ship.cargo.capacity.container">
+                <continue comment="Ware ignorieren, falls wir nicht mindestens 10% des Schiffes damit beladen können" />
               </do_if>
 
-              <append_to_list name="$possibleTrips" exact="table[
-                $tripType = $tripType,  
+              <do_if value="$importance le 0">
+                <continue comment="Ware ignorieren, falls der Transport nicht sinnvoll ist" />
+              </do_if>
+
+              <append_to_list name="$possibleTransports" exact="table[
+                $transportType = $transportType,
+                $importance = $importance,
                 $rating = $rating,
                 $ware = $providerOffer.ware,
                 $amount = $amount,
@@ -615,6 +635,8 @@
                 $backpressure = $backpressure,
                 $provider = $provider,
                 $receiver = $receiver,
+                $providerID = $receiver.idcode,
+                $receiverID = $receiver.idcode,
                 $providerOffer = $providerOffer, 
                 $receiverOffer = $receiverOffer,
               ]" />
@@ -622,10 +644,83 @@
           </do_for_each>
         </do_for_each>
 
-        <sort_list list="$possibleTrips" sortbyvalue="loop.element.$rating" sortdescending="true" />
-        <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="'  ' + $possibleTrips.count + ' possible trades found'" />
-        <return value="$possibleTrips" />
+        <sort_list list="$possibleTransports" sortbyvalue="loop.element.$rating" sortdescending="true" />
+        <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="'  ' + $possibleTransports.count + ' possible transports found'" />
+        <return value="$possibleTransports" />
 
+      </actions>
+    </library>
+
+    <library name="AssembleTrip" purpose="run_actions" namespace="this" comment="Fügt mehrere Transports zu einem Trip zusammen">
+      <params>
+        <param name="ship" />
+        <param name="order" />
+        <param name="possibleTransports" comment="Die Einzel-Warentransporte, absteigend nach Rating sortiert" />
+        <param name="provider" comment="kann null sein" />
+        <param name="receiver" comment="kann null sein" />
+      </params>
+      <actions>
+
+        <create_list name="$checkedRelations" />
+        <do_for_each in="$possibleTransports" name="$referenceTransport">
+
+          <!-- Auf relevante Relationen filtern -->
+          <do_if value="$provider != null and $referenceTransport.$provider != $provider">
+            <continue />
+          </do_if>
+          <do_if value="$receiver != null and $referenceTransport.$receiver != $receiver">
+            <continue />
+          </do_if>
+
+          <!-- Jede Relation nur einmal prüfen -->
+          <set_value name="$relationID" exact="$referenceTransport.$provider.idcode + ' -> ' + $referenceTransport.$receiver.idcode" />
+          <do_if value="$checkedRelations.indexof.{$relationID} != 0">
+            <continue comment="Relation wurde bereits geprüft" />
+          </do_if>
+          <append_to_list name="$checkedRelations" exact="$relationID" />
+
+          <!-- Alle Transports zusammensuchen, die zur Relation gehören (sortiert nach absteigendem Rating ist bereits) -->
+          <set_value name="$usedCargoSpace" exact="0" />
+          <set_value name="$rating" exact="0" />
+          <create_list name="$transportWares" />
+          <do_for_each in="$possibleTransports" name="$transport">
+            <do_if value="$transport.$provider == $referenceTransport.$provider and $transport.$receiver == $referenceTransport.$receiver">
+              <set_value name="$maxTransportAmount" exact="[$transport.$amount * $transport.$ware.volume, $ship.cargo.capacity.container - $usedCargoSpace].min / $transport.$ware.volume" />
+              <set_value name="$neededCargoSpace" exact="$maxTransportAmount * $transport.$ware.volume" />
+              <append_to_list name="$transportWares" exact="table[
+                $ware = $transport.$ware,
+                $amount = $maxTransportAmount,
+                $providerOffer = $transport.$providerOffer, 
+                $receiverOffer = $transport.$receiverOffer,
+              ]" />
+              <set_value name="$usedCargoSpace" operation="add" exact="$neededCargoSpace" />
+              <set_value name="$rating" operation="add" exact="$transport.$rating" />
+              <do_if value="$transportWares.count ge 3">
+                <break comment="Fertig, wenn es zu viele verschiedene Waren werden" />
+              </do_if>
+              <do_if value="$usedCargoSpace gt 0.98 * $ship.cargo.capacity.container">
+                <break comment="Fertig, wenn das Schiff voll beladen ist" />
+              </do_if>
+            </do_if>
+          </do_for_each>
+
+          <!-- Falls die minCargoUsage erreicht wurde => als Ergebnis zurckgeben. Ansonsten wird die nächste Relation geprüft -->
+          <set_value name="$cargoUsage" exact="100f * $usedCargoSpace / $ship.cargo.capacity.container" />
+          <do_if value="$cargoUsage ge $order.$minCargoUsage">
+            <return value="table[
+              $provider = $referenceTransport.$provider,
+              $receiver = $referenceTransport.$receiver,
+              $providerID = $referenceTransport.$receiver.idcode,
+              $receiverID = $referenceTransport.$receiver.idcode,
+              $wares = $transportWares,
+              $cargoUsage = $cargoUsage,
+              $rating = $rating,
+            ]" />
+          </do_if>
+
+        </do_for_each>
+
+        <return value="null" />
       </actions>
     </library>
 
