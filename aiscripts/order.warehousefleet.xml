@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="37">
+<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="38">
 
     <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
         <params>
@@ -10,15 +10,15 @@
             </param>
             <param name="targets" type="list" default="[$sourceStation.sector]" text="Targets">
                 <input_param name="type" value="'object'" />
-                <!--<input_param name="class" value="[class.station, class.sector]" />-->
             </param>
             <param name="targetsL" type="list" default="[]" text="Targets (L)">
                 <input_param name="type" value="'object'" />
-                <!--<input_param name="class" value="[class.station, class.sector]" />-->
             </param>
             <param name="targetsM" type="list" default="[]" text="Targets (M)">
                 <input_param name="type" value="'object'" />
-                <!--<input_param name="class" value="[class.station, class.sector]" />-->
+            </param>
+            <param name="supplyTargets" type="list" default="[]" text="Supply Targets">
+                <input_param name="type" value="'object'" />
             </param>
 
             <param name="minCargoUsage" default="50" type="number" text="Min. Cargo Usage (%)">
@@ -29,7 +29,7 @@
                 <input_param name="min" value="0" />
                 <input_param name="max" value="10" />
             </param>
-            <param name="prioBuild" default="5" type="number" text="Prio: Supply Build Storage">
+            <param name="prioSupply" default="5" type="number" text="Prio: Supply">
                 <input_param name="min" value="0" />
                 <input_param name="max" value="10" />
             </param>
@@ -68,6 +68,11 @@
     <init>
         <set_order_syncpoint_reached order="this.assignedcontrolled.order" />
     </init>
+
+    <patch sinceversion="38">
+        <set_value name="$prioSupply" exact="5" />
+        <set_value name="$supplyTargets" exact="[]" />
+    </patch>
 
     <attention min="unknown">
         <actions>

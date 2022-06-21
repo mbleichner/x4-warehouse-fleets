@@ -8,9 +8,10 @@
                 <param name="targets" value="$order.$targets" />
                 <param name="targetsM" value="$order.$targetsM" />
                 <param name="targetsL" value="$order.$targetsL" />
+                <param name="supplyTargets" value="$order.$supplyTargets" />
                 <param name="prioDistribution" value="$order.$prioDistribution" />
                 <param name="prioTrade" value="$order.$prioTrade" />
-                <param name="prioBuild" value="$order.$prioBuild" />
+                <param name="prioSupply" value="$order.$prioSupply" />
                 <param name="minCargoUsage" value="$order.$minCargoUsage" />
                 <param name="tradeGatePenalty" value="$order.$tradeGatePenalty" />
                 <param name="accountThreshold" value="$order.$accountThreshold" />
