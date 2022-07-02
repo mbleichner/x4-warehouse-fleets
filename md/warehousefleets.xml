@@ -753,23 +753,7 @@
 
         <do_for_each in="$newTargets" name="$target">
 
-          <do_if value="$target.class == class.station">
-
-            <!-- Station einfügen -->
-            <do_if value="$stations.indexof.{$target} == 0">
-              <append_to_list name="$stations" exact="$target" />
-            </do_if>
-
-            <!-- Zugehörige Build-Storage einfügen, falls vorhanden -->
-            <do_if value="$target.buildstorage != null and $stations.indexof.{$target.buildstorage} == 0">
-              <append_to_list name="$stations" exact="$target.buildstorage" />
-            </do_if>
-
-          </do_if>
-
           <do_if value="$target.class == class.sector">
-
-            <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="' DOCK  ' +$ship.docksize" />
 
             <!-- Stationen suchen und einfügen -->
             <find_station multiple="true" space="$target" name="$stationsInSector" active="true">
@@ -799,6 +783,17 @@
             </do_for_each>
 
           </do_if>
+
+          <!-- Station einfügen -->
+          <do_if value="$target.class == class.station and $stations.indexof.{$target} == 0">
+            <append_to_list name="$stations" exact="$target" />
+          </do_if>
+
+          <!-- Zugehörige Build-Storage einfügen, falls vorhanden -->
+          <do_if value="$target.buildstorage? and $stations.indexof.{$target.buildstorage} == 0">
+            <append_to_list name="$stations" exact="$target.buildstorage" />
+          </do_if>
+
         </do_for_each>
       </actions>
     </library>
