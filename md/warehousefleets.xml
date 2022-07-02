@@ -515,6 +515,11 @@
                 <continue comment="Falls die Provider-Station ein Supply-Target ist, soll sie nur Waren empfangen, aber nie selber welche anbieten" />
               </do_if>
 
+              <do_if value="$receiver.class == class.buildstorage and not $receiver.base.exists">
+                <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="'ZOMBIE: '+$receiver.idcode" />
+                <continue />
+              </do_if>
+
               <set_value name="$transportType" exact="
                 if $order.$supplyTargets.indexof.{$receiver} > 0 then 'supply'
                 else if $receiver.trueowner == faction.player and $receiver.class == class.buildstorage then 'supply'
@@ -696,7 +701,7 @@
           <set_value name="$usedCargoSpace" exact="0" />
           <set_value name="$rating" exact="0" />
           <set_value name="$transportWares" exact="[]" />
-          <set_value name="$completesBuildRequest" exact="false"/>
+          <set_value name="$completesBuildRequest" exact="false" />
           <do_for_each in="$possibleTransports" name="$transport">
             <do_if value="$transport.$provider == $referenceTransport.$provider and $transport.$receiver == $referenceTransport.$receiver">
               <set_value name="$maxTransportAmount" exact="[$transport.$amount, ($ship.cargo.capacity.container - $usedCargoSpace) / $transport.$ware.volume].min" />
@@ -764,9 +769,14 @@
 
           <do_if value="$target.class == class.sector">
 
+            <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="' DOCK  ' +$ship.docksize" />
+
             <!-- Stationen suchen und einfügen -->
             <find_station multiple="true" space="$target" name="$stationsInSector" active="true">
-              <match_relation_to object="$ship" relation="dock" comparison="ge" />
+              <match_relation_to object="$ship" relation="dock" />
+              <match_content checkoperational="true">
+                <match_dock size="$ship.docksize" trading="true" />
+              </match_content>
               <match_use_blacklist group="blacklistgroup.civilian" type="blacklisttype.sectortravel" object="$ship" />
               <match_use_blacklist group="blacklistgroup.civilian" type="blacklisttype.objectactivity" object="$ship" />
             </find_station>
@@ -778,7 +788,7 @@
 
             <!-- Buildstorages suchen und einfügen -->
             <find_object class="class.buildstorage" multiple="true" space="$target" name="$buildstoragesInSector">
-              <match_relation_to object="$ship" relation="dock" comparison="ge" />
+              <match_relation_to object="$ship" relation="dock" />
               <match_use_blacklist group="blacklistgroup.civilian" type="blacklisttype.sectortravel" object="$ship" />
               <match_use_blacklist group="blacklistgroup.civilian" type="blacklisttype.objectactivity" object="$ship" />
             </find_object>
