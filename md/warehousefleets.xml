@@ -705,9 +705,6 @@
           <do_for_each in="$possibleTransports" name="$transport">
             <do_if value="$transport.$provider == $referenceTransport.$provider and $transport.$receiver == $referenceTransport.$receiver">
               <set_value name="$maxTransportAmount" exact="[$transport.$amount, ($ship.cargo.capacity.container - $usedCargoSpace) / $transport.$ware.volume].min" />
-              <do_if value="$maxTransportAmount == 0">
-                <break comment="Abbrechen, wenn das Schiff voll beladen ist" />
-              </do_if>
               <append_to_list name="$transportWares" exact="table[
                 $ware = $transport.$ware,
                 $amount = $maxTransportAmount,
@@ -719,6 +716,10 @@
               <set_value name="$completesBuildRequest" exact="$completesBuildRequest or $transport.$completesBuildRequest" />
               <do_if value="$transportWares.count ge 3">
                 <break comment="Nicht mehr als 3 verschiedene Waren transportieren" />
+              </do_if>
+              <set_value name="$cargoUsage" exact="100f * $usedCargoSpace / $ship.cargo.capacity.container" />
+              <do_if value="$cargoUsage gt 95f">
+                <break comment="Abbrechen, wenn das Schiff voll beladen ist" />
               </do_if>
             </do_if>
           </do_for_each>
