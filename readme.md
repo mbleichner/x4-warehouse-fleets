@@ -10,7 +10,7 @@ It introduces the WarehouseFleet behaviour, which serves the following purposes:
 - Fill shortages by buying from NPC factions
 - Supply player-owned build storages
 
-*Disclaimer: this is my first X4 mod and it isn't fully tested yet, so use at your own risk - I'll gladly help if you stumble over any problems though. Once it is properly tested, I will probably publish it on Steam and Nexus.*
+*Releases will be published on Nexus Mods: https://www.nexusmods.com/x4foundations/mods/939*
 
 ## Installation
 
