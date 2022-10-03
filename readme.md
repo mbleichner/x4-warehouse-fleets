@@ -30,14 +30,14 @@ To make this work, every warehouse gets assigned a "WarehouseFleet", composed of
 | --- | --- |
 | Home Warehouse | The home warehouse of this fleet. |
 | Adjacent Warehouses | Directly connected other warehouses. The fleet will fetch/deliver wares to balance storage levels between warehouses. |
-| Service Area | A list of sectors or stations. Specifies the area of operation, i.e. which player factories to include in the network and also which NPC stations to trade with. |
-| Blacklist (M) | A list of sectors or stations to avoid with M-class ships. Can be used to avoid high-risk areas. |
-| Blacklist (L) | A list of sectors or stations to avoid with L-class ships. Can be used to avoid scheduling too short trips for freighters. |
+| Targets | A list of sectors or stations. Specifies the area of operation, i.e. which player factories to include in the network and also which NPC stations to trade with. |
+| Targets (L) | Targets that are only allowed for L-sized freighters. Useful for routes through dangerous territory. |
+| Targets (M) | Targets that are only allowed for M-sized cargo ships. |
+| Supply Targets | Target stations that should always get filled to the max, regardless of fair resource distribution. Useful especially for shipyards. Please note: supply targets also have to be entered in one of the above target settings! |
 | Min. Cargo Usage (%) | Avoids scheduling inefficient trips. No ship will be scheduled that uses less than the specified cargo space. Setting this value too high might prevent/delay balancing of low volume wares though. |
 | Prio: Distribute | Set to high values to generally favor ware distribution over other tasks. |
 | Prio: Supply Build Storage | Set to high values to generally favor supplying build storages over other tasks. |
 | Prio: Trade  | Set to high values to generally favor trading over other tasks. |
-| Trades: Storage &lt;-&gt; Profit | When checking trade options, determines if we should maximize profit or try to resolve situations of full storages or shortages.  |
 | Trades: Gate Penalty (%) | Reduces the attractivity of trades in other sectors to keep travel distances short. |
 | Account Threshold | Buying wares from NPC stations will only be allowed if it leaves the player account with more money than this setting. This setting will be synchronized between all WarehouseFleets! |
 
@@ -60,15 +60,23 @@ Be cautious with unrestricted buy offers. Those can drain your account. Use the 
 
 The player-owned stations don't need any budgets for this mod to work. All trades with NPC factions use the global player account. (I tried to make it work with station accounts, but unfortunately this isn't possible without commander-assignment and this in turn locks the fleet settings so they cannot be changed afterwards - which would be a huge drawback).
 
-If a warehouse has unrestricted sell offers, NPC traders can also buy directly from your warehouse. If this happens, the money goes to the station account. Check those accounts from time to time.
-In future versions of the mod I might automate this.
+If a warehouse has unrestricted sell offers, NPC traders can also buy directly from your warehouse. If this happens, the money goes to the station account. If the station account reaches 200k, it will be transferred to the player account. If needed, this could be made configurable in a future version.
 
 ## Notes
 
+- Any ship might carry up to three different resources at once.
 - Idle ships will dock at their home warehouse and wait for something to do.
 - Ships will always begin and end their tasks at the home warehouse. A ship will fly back to the warehouse, even if it has nothing to carry and could in theory fly directly to another station. This is intentional, so that the routes are easier to control and protect. If shortcutting was allowed, the pathing could become unpredictable and ships might fly through hostile regions.
-- S class ships will not use the service area setting and instead only operate in the local sector. They are generally very inefficient when it comes to longer flights and to cut down on settings, this behavior is hardcoded.
+- S class ships will only operate in the local sector. They are generally very inefficient when it comes to longer flights and to cut down on settings, this behavior is hardcoded.
 - Ships will only consider a trade if it is profitable. This means they will only sell a ware if your sell offer is cheaper than the buy offer of an NPC station and they will only buy a ware if your buy offer is higher than the sell offer of an NPC station. Usually, you want to set automatic pricing, so your ships will only buy/sell wares if the offer is profitable considering the current market price.
+
+## Recommendations
+
+- Add ships of all sizes (S/M/L) to your fleets, so every transport job can be assigned an appropriate-sized ship.
+- Restrict traffic between warehouses to L-sized ships. This avoids a lot of pirate/xenon trouble.
+- Use the strongest ship of the fleet as commander - if the commander gets killed, you have to redo all of the fleet configuration, because the game doesn't auto-transfer the behavior to another ship of the fleet.
+- Since idle ships dock and stay docked at the warehouse, it is advisable to have more L-docks than L-ships. Otherwise your warehouse might by completely blocked by docked freighters.
+- Check your warehouses from time to time for overworked fleets - if there are no idle ships waiting for work, it might be advisable to add more ships.
 
 ## Some Implementation Details
 
@@ -79,6 +87,6 @@ In future versions of the mod I might automate this.
 
 ## Known Problems
 
-- When selecting the service area of a fleet, the game UI sometimes crashes and resets itself. I have no idea why this happens. Seems to be a bug in the game. It is recommended to save before editing this parameter.
+- When defining the targets of a newly created fleet, the game UI sometimes crashes and resets itself. I have no idea why this happens. Seems to be a bug in the game. It is recommended to save before editing this parameter.
 - When creating a new WarehouseFleet, the account threshold parameter is initalized with a default value. Remember to always adjust this value before saving, because it will be synced to all other fleets.
 - Setting up the trades of the warehouses is a bit tedious at the moment, because it has to be done one by one in each warehouse. I don't know if there is a good solution to this problem.

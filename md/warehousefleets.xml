@@ -222,6 +222,7 @@
 
         <set_value name="$sourceStation" exact="$order.$sourceStation" />
         <do_if value="$sourceStation.money gt 200000Cr">
+          <!-- FIXME: Bisschen Geld übrig lassen, damit die Station Waren ankaufen kann? -->
           <set_value name="$moneyToTransfer" exact="$sourceStation.money" />
           <write_to_logbook category="upkeep" object="$sourceStation" title="'Warehouse Account'" money="$moneyToTransfer" text="'Transferring credits from ' + $sourceStation.knownname +' (' + $sourceStation.idcode + ')'" />
           <transfer_money from="$sourceStation" to="faction.player" amount="$moneyToTransfer" />
