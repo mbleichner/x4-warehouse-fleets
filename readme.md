@@ -29,8 +29,7 @@ To make this work, every warehouse gets assigned a "WarehouseFleet", composed of
 | Parameter | Description |
 | --- | --- |
 | Home Warehouse | The home warehouse of this fleet. |
-| Adjacent Warehouses | Directly connected other warehouses. The fleet will fetch/deliver wares to balance storage levels between warehouses. |
-| Targets | A list of sectors or stations. Specifies the area of operation, i.e. which player factories to include in the network and also which NPC stations to trade with. |
+| Targets | A list of sectors or stations. This should include all connected warehouses, as well as any sectors/stations to trade with. |
 | Targets (L) | Targets that are only allowed for L-sized freighters. Useful for routes through dangerous territory. |
 | Targets (M) | Targets that are only allowed for M-sized cargo ships. |
 | Supply Targets | Target stations that should always get filled to the max, regardless of fair resource distribution. Useful especially for shipyards. Please note: supply targets also have to be entered in one of the above target settings! |
