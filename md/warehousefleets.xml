@@ -459,7 +459,6 @@
           <do_if value="$wares.count gt 0">
             <find_sell_offer seller="$provider" result="$offers" multiple="true" usereservations="true" wares="$wares" tradepartner="$ship">
               <match_seller>
-                <match_use_blacklist object="$ship" group="blacklistgroup.civilian" type="blacklisttype.sectortravel" />
                 <match_use_blacklist object="$ship" group="blacklistgroup.civilian" type="blacklisttype.objectactivity" />
               </match_seller>
             </find_sell_offer>
@@ -479,7 +478,6 @@
           <do_if value="$wares.count gt 0">
             <find_buy_offer buyer="$receiver" result="$offers" multiple="true" usereservations="true" wares="$wares" tradepartner="$ship" excludeempty="false" comment="excludeempty, da Warehouses ohne Budget sonst nichts ankaufen können">
               <match_buyer>
-                <match_use_blacklist object="$ship" group="blacklistgroup.civilian" type="blacklisttype.sectortravel" />
                 <match_use_blacklist object="$ship" group="blacklistgroup.civilian" type="blacklisttype.objectactivity" />
               </match_buyer>
             </find_buy_offer>
