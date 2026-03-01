@@ -14,7 +14,6 @@
         <param name="prioSupply" value="$order.$prioSupply" />
         <param name="minCargoUsage" value="$order.$minCargoUsage" />
         <param name="tradeGatePenalty" value="$order.$tradeGatePenalty" />
-        <param name="accountThreshold" value="$order.$accountThreshold" />
       </run_script>
     </do_if>
   </add>

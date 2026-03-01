@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mdscript name="WarehouseFleets" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/md.xsd">
   <cues>
-
     <!-- Startet den Main Cue, falls dieser nicht aktiv sein sollte. Passiert z.B. bei einem Reset durch Versions-Update -->
     <cue name="Initializer" instantiate="true" checkinterval="1">
       <conditions>
@@ -11,6 +10,21 @@
         <set_value name="global.$debugchance" exact="0" />
         <signal_cue cue="WarehouseFleets" check="false" />
       </actions>
+    </cue>
+
+    <cue name="Config" version="3">
+      <conditions>
+        <check_any>
+          <event_cue_signalled cue="md.Setup.GameStart" />
+          <event_universe_generated />
+          <event_game_loaded />
+        </check_any>
+      </conditions>
+      <patch sinceversion="3">
+        <set_value name="$accountThreshold" exact="1" />
+        <set_value name="$transferToPlayer" exact="true" />
+        <set_value name="$failedOrderHandling" exact="1" />
+      </patch>
     </cue>
 
     <!-- Main Cue -->
@@ -119,25 +133,16 @@
                   </actions>
                 </cue>
 
-                <!-- Synchronisiert Parameter zwischen verschiedenen Flotten -->
-                <cue name="OrderParamSynchronization" instantiate="true">
+                <cue name="ReorderTargetsOnSave" instantiate="true">
                   <conditions>
                     <event_object_order_ready object="$ship" />
                     <check_value value="@event.param.id == 'WarehouseFleet'" />
                   </conditions>
                   <actions>
-                    <set_value name="$thisShip" exact="event.object" />
                     <set_value name="$order" exact="event.param" />
                     <sort_list list="$order.$targets" sortbyvalue="(if (loop.element.class == class.station) then 'AAA:' else '') + loop.element.knownname" />
                     <sort_list list="$order.$targetsM" sortbyvalue="(if (loop.element.class == class.station) then 'AAA:' else '') + loop.element.knownname" />
                     <sort_list list="$order.$targetsL" sortbyvalue="(if (loop.element.class == class.station) then 'AAA:' else '') + loop.element.knownname" />
-                    <find_ship_by_true_owner space="player.galaxy" faction="faction.player" multiple="true" name="$otherShips" excluded="$thisShip" />
-                    <do_for_each in="$otherShips" name="$otherShip">
-                      <do_if value="$otherShip.defaultorder != null and $otherShip.defaultorder.id == 'WarehouseFleet'">
-                        <debug_to_file chance="global.$debugchance" name="'scheduler'" directory="'WarehouseFleets'" text="'Syncing params ' + $thisShip.idcode + ' -> ' + $otherShip.idcode" output="false" append="true" />
-                        <edit_order_param order="$otherShip.defaultorder" param="'accountThreshold'" value="$order.$accountThreshold" />
-                      </do_if>
-                    </do_for_each>
                   </actions>
                 </cue>
               </cues>
@@ -222,7 +227,7 @@
 
         <!-- Transfer money from station to player account if at least 10% above operating budget -->
         <set_value name="$sourceStation" exact="$order.$sourceStation" />
-        <do_if value="$sourceStation.money gt ($sourceStation.tradewaremoney * 110 / 100)"><!-- avoid floating point operations -->
+        <do_if value="md.WarehouseFleets.Config.$transferToPlayer and ($sourceStation.money gt ($sourceStation.tradewaremoney * 110 / 100))"><!-- avoid floating point operations -->
           <set_value name="$moneyToTransfer" exact="$sourceStation.money - $sourceStation.tradewaremoney" />
           <write_to_logbook category="upkeep" object="$sourceStation" title="'Warehouse Account'" money="$moneyToTransfer" text="'Transferring credits from ' + $sourceStation.knownname +' (' + $sourceStation.idcode + ')'" />
           <transfer_money from="$sourceStation" to="faction.player" amount="$moneyToTransfer" />
@@ -231,15 +236,11 @@
         <!-- Schiff leer machen, falls noch Ladung vorhanden -->
         <set_value name="$cargo" exact="$ship.cargo.list" />
         <do_if value="$cargo.count gt 0">
-          <do_all exact="$cargo.count" counter="$wareInCargo">
-            <set_value name="$ware" exact="$cargo.{$wareInCargo}" />
-            <set_value name="$amount" exact="$ship.cargo.{$ware}.count" />
-            <set_value name="$money" exact="$amount * $ware.averageprice" />
-            <remove_cargo object="$ship" ware="$ware" exact="$amount" />
-            <reward_player money="$money" />
-            <set_value name="$rewardLogText" exact="'rewarded player for ' +$amount + ' ' +$ware + ' at averageprice ' +$ware.averageprice/100.0 + ' due to cargo emptying routine'" />
-            <write_to_logbook category="upkeep" object="$ship" title="'WarehouseFleet: ' + $ship.knownname +' (' + $ship.idcode + ')'" interaction="showonmap" money="$money" text="$rewardLogText" />
-          </do_all>
+          <run_actions ref="EmptyCargoRoutine">
+            <param name="ship" value="$ship" />
+            <param name="cargo" value="$cargo" />
+            <param name="warehouse" value="$sourceStation" />
+          </run_actions>
         </do_if>
 
         <!-- Target Stations ermitteln (als Targets können auch Sektoren angegeben werden) -->
@@ -597,7 +598,7 @@
               </do_elseif>
               <do_elseif value="$provider.trueowner != faction.player">
                 <!-- Ankauf von Waren - hier berechnen wir die Einkaufsmenge selbst, denn die BuyOffers können aufgrund fehlender Stationsbudgets wesentlich zu niedrig sein -->
-                <set_value name="$buyAmount" exact="[(player.money - $order.$accountThreshold * 1000000Cr)L / ($receiverOffer.unitprice)i, $receiverOffer.desiredamount].min" />
+                <set_value name="$buyAmount" exact="[(player.money - md.WarehouseFleets.Config.$accountThreshold * 1000000Cr)L / ($receiverOffer.unitprice)i, $receiverOffer.desiredamount].min" />
                 <set_value name="$amount" exact="[[$maxWareAmount, $providerOffer.amount, $buyAmount].min, 0].max" />
               </do_elseif>
               <do_else>
@@ -750,6 +751,66 @@
         </do_for_each>
 
         <return value="null" />
+      </actions>
+    </library>
+
+    <library name="EmptyCargoRoutine" purpose="run_actions" namespace="this">
+      <params>
+        <param name="ship" />
+        <param name="cargo" />
+        <param name="warehouse" />
+      </params>
+      <actions>
+        <do_if value="md.WarehouseFleets.Config.$failedOrderHandling == 1"><!-- Refund -->
+          <set_value name="$recipient" exact="if $ship.toplevelcommander.class == class.station then $warehouse else faction.player" />
+          <do_all exact="$cargo.count" counter="$wareInCargo">
+            <set_value name="$ware" exact="$cargo.{$wareInCargo}" />
+            <set_value name="$amount" exact="$ship.cargo.{$ware}.count" />
+            <set_value name="$money" exact="$amount * $ware.averageprice" />
+            <remove_cargo object="$ship" ware="$ware" exact="$amount" />
+            <transfer_money from="faction.ownerless" to="$recipient" amount="$money" />
+            <set_value name="$recoveryText" exact="'Refunding '+$amount+' '+$ware+'at the average price of '+$ware.averageprice/100.0+'Cr'" />
+            <write_to_logbook category="upkeep" entity="$warehouse" object="$ship" interaction="showonmap" title="'WarehouseFleet: Cargo Empty Routine ('+$warehouse.idcode+')'" money="$money" text="$recoveryText" />
+          </do_all>
+        </do_if>
+        <do_elseif value="md.WarehouseFleets.Config.$failedOrderHandling == 2"><!-- Teleport -->
+          <do_all exact="$cargo.count" counter="$wareInCargo">
+            <set_value name="$ware" exact="$cargo.{$wareInCargo}" />
+            <set_value name="$amount" exact="$ship.cargo.{$ware}.count" />
+            <remove_cargo object="$ship" ware="$ware" exact="$amount" />
+            <add_cargo object="$warehouse" ware="$ware" exact="$amount" />
+            <set_value name="$recoveryText" exact="'Teleported '+$amount+' '+$ware+' back to the Warehouse'" />
+            <write_to_logbook category="upkeep" entity="$warehouse" object="$ship" interaction="showonmap" title="'WarehouseFleet: Cargo Empty Routine ('+$warehouse.idcode+')'" text="$recoveryText" />
+          </do_all>
+        </do_elseif>
+        <do_elseif value="md.WarehouseFleets.Config.$failedOrderHandling == 3"><!-- Destroy -->
+          <do_all exact="$cargo.count" counter="$wareInCargo">
+            <set_value name="$ware" exact="$cargo.{$wareInCargo}" />
+            <set_value name="$amount" exact="$ship.cargo.{$ware}.count" />
+            <remove_cargo object="$ship" ware="$ware" exact="$amount" />
+            <set_value name="$recoveryText" exact="'Destroyed '+$amount+' '+$ware" />
+            <write_to_logbook category="upkeep" entity="$warehouse" object="$ship" interaction="showonmap" title="'WarehouseFleet: Cargo Empty Routine ('+$warehouse.idcode+')'" text="$recoveryText" />
+          </do_all>
+        </do_elseif>
+        <do_elseif value="md.WarehouseFleets.Config.$failedOrderHandling == 4"><!-- Return -->
+          <do_all exact="$cargo.count" counter="$wareInCargo">
+            <set_value name="$ware" exact="$cargo.{$wareInCargo}" />
+            <set_value name="$amount" exact="$ship.cargo.{$ware}.count" />
+            <create_trade_offer name="$returnOffer" buyer="$warehouse" object="$warehouse" ware="$ware" price="0ct" amount="$amount" playeronly="true" />
+            <create_trade_order name="$returnOrder" object="$ship" tradeoffer="$returnOffer" immediate="true" internal="true" price="0ct" amount="$amount" />
+            <set_value name="$recoveryText" exact="'Return order created for '+$amount+' '+$ware" />
+            <write_to_logbook category="upkeep" entity="$warehouse" object="$ship" interaction="showonmap" title="'WarehouseFleet: Cargo Empty Routine ('+$warehouse.idcode+')'" text="$recoveryText" />
+          </do_all>
+        </do_elseif>
+        <do_elseif value="md.WarehouseFleets.Config.$failedOrderHandling == 5"><!-- Drop -->
+          <do_all exact="$cargo.count" counter="$wareInCargo">
+            <set_value name="$ware" exact="$cargo.{$wareInCargo}" />
+            <set_value name="$amount" exact="$ship.cargo.{$ware}.count" />
+            <drop_cargo object="$ship" ware="$ware" exact="$amount" />
+            <set_value name="$recoveryText" exact="'Dropped '+$amount+' '+$ware" />
+            <write_to_logbook category="upkeep" entity="$warehouse" object="$ship" interaction="showonmap" title="'WarehouseFleet: Cargo Empty Routine ('+$warehouse.idcode+')'" text="$recoveryText" />
+          </do_all>
+        </do_elseif>
       </actions>
     </library>
 

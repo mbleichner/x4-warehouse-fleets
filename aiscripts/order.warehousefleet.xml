@@ -1,51 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/aiscripts.xsd" version="38">
+<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/aiscripts.xsd" version="40">
 
   <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
     <params>
 
-      <param name="sourceStation" required="true" type="object" text="Home Warehouse">
+      <param name="sourceStation" required="true" type="object" text="{1223613,12300}">
         <input_param name="class" value="[class.station]" />
         <input_param name="owner" value="this.ship.trueowner" />
       </param>
-      <param name="targets" type="list" default="[$sourceStation.sector]" text="Targets">
+      <param name="targets" type="list" default="[]" text="{1223613,12301}">
         <input_param name="type" value="'object'" />
       </param>
-      <param name="targetsL" type="list" default="[]" text="Targets (L)">
+      <param name="targetsL" type="list" default="[]" text="{1223613,12303}">
         <input_param name="type" value="'object'" />
       </param>
-      <param name="targetsM" type="list" default="[]" text="Targets (M)">
+      <param name="targetsM" type="list" default="[]" text="{1223613,12304}">
         <input_param name="type" value="'object'" />
       </param>
-      <param name="supplyTargets" type="list" default="[]" text="Supply Targets">
+      <param name="supplyTargets" type="list" default="[]" text="{1223613,12305}">
         <input_param name="type" value="'object'" />
       </param>
 
-      <param name="minCargoUsage" default="50" type="number" text="Min. Cargo Usage (%)">
+      <param name="minCargoUsage" default="50" type="number" text="{1223613,12306}">
         <input_param name="min" value="10" />
         <input_param name="max" value="100" />
       </param>
-      <param name="prioDistribution" default="5" type="number" text="Prio: Distribute">
+      <param name="prioDistribution" default="5" type="number" text="{1223613,12307}">
         <input_param name="min" value="0" />
         <input_param name="max" value="10" />
       </param>
-      <param name="prioSupply" default="5" type="number" text="Prio: Supply">
+      <param name="prioSupply" default="5" type="number" text="{1223613,12308}">
         <input_param name="min" value="0" />
         <input_param name="max" value="10" />
       </param>
-      <param name="prioTrade" default="5" type="number" text="Prio: Trade">
+      <param name="prioTrade" default="5" type="number" text="{1223613,12309}">
         <input_param name="min" value="0" />
         <input_param name="max" value="10" />
       </param>
-      <param name="tradeGatePenalty" default="20" type="number" text="Trades: Gate Penalty (%)">
+      <param name="tradeGatePenalty" default="20" type="number" text="{1223613,12310}">
         <input_param name="min" value="0" />
         <input_param name="max" value="90" />
       </param>
-      <param name="accountThreshold" type="number" default="1" text="Account Threshold (Million)">
-        <input_param name="min" value="0" />
-        <input_param name="max" value="100" />
-      </param>
-
     </params>
     <requires>
       <match shiptype="shiptype.lasertower" negate="true" />
