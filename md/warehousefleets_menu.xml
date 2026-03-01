@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mdscript name="WarehouseFleetsMenu" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/md.xsd">
+  <cues>
+    <cue name="StartSMO" instantiate="true">
+      <conditions>
+        <event_cue_signalled cue="md.Simple_Menu_Options.Reloaded" />
+      </conditions>
+      <actions>
+        <signal_cue_instantly cue="md.Simple_Menu_API.Register_Options_Menu"
+          param="table[
+            $id = 'WarehouseFleetsConfigMenu',
+            $columns = 2,
+            $title = {1223613, 36700},
+            $onOpen = BuildWarehouseFleetConfigMenu,
+          ]" />
+        <cancel_cue cue="this" />
+      </actions>
+    </cue>
+    <cue name="BuildWarehouseFleetConfigMenu" instantiate="true">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <debug_text text="''" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36701}]" />
+        <signal_cue_instantly
+          cue="md.Simple_Menu_API.Make_Slider"
+          param="table[
+            $id = 'accountThreshold',
+            $start = md.WarehouseFleets.Config.$accountThreshold,
+            $col = 2,
+            $text = table[$text=''],
+            $min = 0, $max = 100, $suffix = 'M',
+            $default = 1,
+            $mouseOverText = {1223613, 46701} + '\n\n' + {1001, 3231} + ': 1',
+            $onSliderCellConfirm = OnUpdateAccountThreshold
+          ]"
+        />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36702}]" />
+        <signal_cue_instantly
+          cue="md.Simple_Menu_API.Make_CheckBox"
+          param="table[
+            $id = 'transferToPlayer',
+            $checked = md.WarehouseFleets.Config.$transferToPlayer,
+            $col = 2,
+            $width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+            $default = false,
+            $mouseOverText = {1223613, 46702} + '\n\n' + {1001, 3231} + ': ' + {1001, 2649},
+            $onClick = OnUpdateTransferToPlayer
+          ]"
+        />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36706}]" />
+        <signal_cue_instantly
+          cue="md.Simple_Menu_API.Make_Dropdown"
+          param="table[
+              $id = 'failedOrderHandling',
+              $col = 2,
+              $options = [
+                table[$text={1223613, 36707}, $value=1],
+                table[$text={1223613, 36708}, $value=2],
+                table[$text={1223613, 36709}, $value=3],
+                table[$text={1223613, 36710}, $value=4],
+                table[$text={1223613, 36711}, $value=5]
+              ],
+              $startOption = md.WarehouseFleets.Config.$failedOrderHandling,
+              $mouseOverText = {1223613, 46706} + 
+                               {1223613, 46707} +
+                               {1223613, 46708} +
+                               {1223613, 46709} +
+                               {1223613, 46710} +
+                               {1223613, 46711},
+              $onDropDownConfirmed = OnUpdateFailedOrderHandling
+          ]" />
+      </actions>
+    </cue>
+    <cue name="OnUpdateTransferToPlayer" instantiate="true">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <set_value name="md.WarehouseFleets.Config.$transferToPlayer" exact="event.param.$checked" />
+      </actions>
+    </cue>
+    <cue name="OnUpdateFailedOrderHandling" instantiate="true">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <set_value name="md.WarehouseFleets.Config.$failedOrderHandling" exact="event.param.$option.$value" />
+      </actions>
+    </cue>
+    <cue name="OnUpdateAccountThreshold" instantiate="true">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <set_value name="md.WarehouseFleets.Config.$accountThreshold" exact="event.param.$value" />
+      </actions>
+    </cue>
+  </cues>
+</mdscript>
