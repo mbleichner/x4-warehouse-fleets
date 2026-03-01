@@ -1,100 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 <aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="38">
 
-    <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
-        <params>
+  <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
+    <params>
 
-            <param name="sourceStation" required="true" type="object" text="Home Warehouse">
-                <input_param name="class" value="[class.station]" />
-                <input_param name="owner" value="this.ship.trueowner" />
-            </param>
-            <param name="targets" type="list" default="[$sourceStation.sector]" text="Targets">
-                <input_param name="type" value="'object'" />
-            </param>
-            <param name="targetsL" type="list" default="[]" text="Targets (L)">
-                <input_param name="type" value="'object'" />
-            </param>
-            <param name="targetsM" type="list" default="[]" text="Targets (M)">
-                <input_param name="type" value="'object'" />
-            </param>
-            <param name="supplyTargets" type="list" default="[]" text="Supply Targets">
-                <input_param name="type" value="'object'" />
-            </param>
+      <param name="sourceStation" required="true" type="object" text="Home Warehouse">
+        <input_param name="class" value="[class.station]" />
+        <input_param name="owner" value="this.ship.trueowner" />
+      </param>
+      <param name="targets" type="list" default="[$sourceStation.sector]" text="Targets">
+        <input_param name="type" value="'object'" />
+      </param>
+      <param name="targetsL" type="list" default="[]" text="Targets (L)">
+        <input_param name="type" value="'object'" />
+      </param>
+      <param name="targetsM" type="list" default="[]" text="Targets (M)">
+        <input_param name="type" value="'object'" />
+      </param>
+      <param name="supplyTargets" type="list" default="[]" text="Supply Targets">
+        <input_param name="type" value="'object'" />
+      </param>
 
-            <param name="minCargoUsage" default="50" type="number" text="Min. Cargo Usage (%)">
-                <input_param name="min" value="10" />
-                <input_param name="max" value="100" />
-            </param>
-            <param name="prioDistribution" default="5" type="number" text="Prio: Distribute">
-                <input_param name="min" value="0" />
-                <input_param name="max" value="10" />
-            </param>
-            <param name="prioSupply" default="5" type="number" text="Prio: Supply">
-                <input_param name="min" value="0" />
-                <input_param name="max" value="10" />
-            </param>
-            <param name="prioTrade" default="5" type="number" text="Prio: Trade">
-                <input_param name="min" value="0" />
-                <input_param name="max" value="10" />
-            </param>
-            <param name="tradeGatePenalty" default="20" type="number" text="Trades: Gate Penalty (%)">
-                <input_param name="min" value="0" />
-                <input_param name="max" value="90" />
-            </param>
-            <param name="accountThreshold" type="number" default="1" text="Account Threshold (Million)">
-                <input_param name="min" value="0" />
-                <input_param name="max" value="100" />
-            </param>
+      <param name="minCargoUsage" default="50" type="number" text="Min. Cargo Usage (%)">
+        <input_param name="min" value="10" />
+        <input_param name="max" value="100" />
+      </param>
+      <param name="prioDistribution" default="5" type="number" text="Prio: Distribute">
+        <input_param name="min" value="0" />
+        <input_param name="max" value="10" />
+      </param>
+      <param name="prioSupply" default="5" type="number" text="Prio: Supply">
+        <input_param name="min" value="0" />
+        <input_param name="max" value="10" />
+      </param>
+      <param name="prioTrade" default="5" type="number" text="Prio: Trade">
+        <input_param name="min" value="0" />
+        <input_param name="max" value="10" />
+      </param>
+      <param name="tradeGatePenalty" default="20" type="number" text="Trades: Gate Penalty (%)">
+        <input_param name="min" value="0" />
+        <input_param name="max" value="90" />
+      </param>
+      <param name="accountThreshold" type="number" default="1" text="Account Threshold (Million)">
+        <input_param name="min" value="0" />
+        <input_param name="max" value="100" />
+      </param>
 
-        </params>
-        <requires>
-            <match shiptype="shiptype.lasertower" negate="true" />
-        </requires>
-    </order>
+    </params>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true" />
+    </requires>
+  </order>
 
-    <interrupts>
-        <handler ref="SectorChangeHandler" />
-        <handler ref="AttackHandler" />
-        <handler ref="MissileLockHandler" />
-        <handler ref="ScannedHandler" />
-        <handler ref="InspectedHandler" />
-        <handler ref="FoundAbandonedHandler" />
-        <handler ref="FoundLockboxHandler" />
-        <handler ref="ResupplyHandler" />
-        <handler ref="TargetInvalidHandler" />
-        <handler ref="TideHandler" />
-    </interrupts>
+  <interrupts>
+    <handler ref="SectorChangeHandler" />
+    <handler ref="AttackHandler" />
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler" />
+    <handler ref="InspectedHandler" />
+    <handler ref="FoundAbandonedHandler" />
+    <handler ref="FoundLockboxHandler" />
+    <handler ref="ResupplyHandler" />
+    <handler ref="TargetInvalidHandler" />
+    <handler ref="TideHandler" />
+  </interrupts>
 
-    <init>
-        <set_order_syncpoint_reached order="this.assignedcontrolled.order" />
-    </init>
+  <init>
+    <set_order_syncpoint_reached order="this.assignedcontrolled.order" />
+  </init>
 
-    <patch sinceversion="38">
-        <set_value name="$prioSupply" exact="5" />
-        <set_value name="$supplyTargets" exact="[]" />
-    </patch>
+  <patch sinceversion="38">
+    <set_value name="$prioSupply" exact="5" />
+    <set_value name="$supplyTargets" exact="[]" />
+  </patch>
 
-    <attention min="unknown">
-        <actions>
+  <attention min="unknown">
+    <actions>
 
-            <!-- Scheduling versuchen -->
-            <set_command command="command.searchtrades" />
-            <set_command_action commandaction="commandaction.searchingtrades" />
-            <signal_objects object="player.entity" param="'WarehouseFleets'" param2="'RequestScheduling'" param3="this.ship" />
+      <!-- Scheduling versuchen -->
+      <set_command command="command.searchtrades" />
+      <set_command_action commandaction="commandaction.searchingtrades" />
+      <signal_objects object="player.entity" param="'WarehouseFleets'" param2="'RequestScheduling'" param3="this.ship" />
 
-            <!-- An Home Station docken -->
-            <set_command_action commandaction="commandaction.docking" />
-            <run_script name="'order.dock'" result="$docksuccess">
-                <param name="destination" value="$sourceStation" />
-                <param name="trading" value="true" />
-            </run_script>
+      <!-- An Home Station docken -->
+      <set_command_action commandaction="commandaction.docking" />
+      <run_script name="'order.dock'" result="$docksuccess">
+        <param name="destination" value="$sourceStation" />
+        <param name="trading" value="true" />
+      </run_script>
 
-            <!-- Regelmäßig neue Schedulings versuchen -->
-            <do_while value="true">
-                <set_command_action commandaction="commandaction.searchingtrades" />
-                <signal_objects object="player.entity" param="'WarehouseFleets'" param2="'RequestScheduling'" param3="this.ship" />
-                <wait min="30s" max="60s" />
-            </do_while>
-        </actions>
-    </attention>
+      <!-- Regelmäßig neue Schedulings versuchen -->
+      <do_while value="true">
+        <set_command_action commandaction="commandaction.searchingtrades" />
+        <signal_objects object="player.entity" param="'WarehouseFleets'" param2="'RequestScheduling'" param3="this.ship" />
+        <wait min="30s" max="60s" />
+      </do_while>
+    </actions>
+  </attention>
 </aiscript>

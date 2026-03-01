@@ -1,41 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <aiscript name="ReturnToWarehouse" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:/Spiele/Steam/steamapps/common/X4 Foundations/unpacked/libraries/aiscripts.xsd" version="6">
 
-    <order id="ReturnToWarehouse" name="Return to Warehouse" description="Return to Warehouse" category="internal">
-        <params>
-            <param name="destination" default="null" advanced="true" type="internal" text="Home Station" />
-        </params>
-        <requires>
-            <match shiptype="shiptype.lasertower" negate="true" />
-        </requires>
-        <location object="$destination" />
-    </order>
+  <order id="ReturnToWarehouse" name="Return to Warehouse" description="Return to Warehouse" category="internal">
+    <params>
+      <param name="destination" default="null" advanced="true" type="internal" text="Home Station" />
+    </params>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true" />
+    </requires>
+    <location object="$destination" />
+  </order>
 
-    <interrupts>
-        <handler ref="SectorChangeHandler" />
-        <handler ref="TargetInvalidHandler" />
-        <handler ref="AttackHandler" />
-        <handler ref="MissileLockHandler" />
-        <handler ref="ScannedHandler" />
-        <handler ref="InspectedHandler" />
-        <handler ref="FoundAbandonedHandler" />
-        <handler ref="FoundLockboxHandler" />
-        <handler ref="ResupplyHandler" />
-        <handler ref="TideHandler" />
-    </interrupts>
+  <interrupts>
+    <handler ref="SectorChangeHandler" />
+    <handler ref="TargetInvalidHandler" />
+    <handler ref="AttackHandler" />
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler" />
+    <handler ref="InspectedHandler" />
+    <handler ref="FoundAbandonedHandler" />
+    <handler ref="FoundLockboxHandler" />
+    <handler ref="ResupplyHandler" />
+    <handler ref="TideHandler" />
+  </interrupts>
 
-    <attention min="unknown">
-        <actions>
-            <label name="start" />
-            <do_if value="this.ship.zone != $destination.zone">
-                <set_command command="command.move" param="$destination" />
-                <set_command_action commandaction="commandaction.flyingto" param="$destination.zone" />
-                <run_script name="'move.generic'">
-                    <param name="destination" value="$destination" />
-                    <param name="endintargetzone" value="true" />
-                </run_script>
-            </do_if>
-            <label name="finish" />
-        </actions>
-    </attention>
+  <attention min="unknown">
+    <actions>
+      <label name="start" />
+      <do_if value="this.ship.zone != $destination.zone">
+        <set_command command="command.move" param="$destination" />
+        <set_command_action commandaction="commandaction.flyingto" param="$destination.zone" />
+        <run_script name="'move.generic'">
+          <param name="destination" value="$destination" />
+          <param name="endintargetzone" value="true" />
+        </run_script>
+      </do_if>
+      <label name="finish" />
+    </actions>
+  </attention>
 </aiscript>

@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <diff xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/diff.xsd">
-    <add sel="//do_if[@value='(@$orderdef and $createdefaultorder?) or not $order.requiredskill or (this.combinedskill ge $order.requiredskill)']">
-        <do_if value="$order.id == 'WarehouseFleet'">
-            <set_value name="$added" />
-            <run_script name="$scriptname">
-                <param name="sourceStation" value="$order.$sourceStation" />
-                <param name="targets" value="$order.$targets" />
-                <param name="targetsM" value="$order.$targetsM" />
-                <param name="targetsL" value="$order.$targetsL" />
-                <param name="supplyTargets" value="$order.$supplyTargets" />
-                <param name="prioDistribution" value="$order.$prioDistribution" />
-                <param name="prioTrade" value="$order.$prioTrade" />
-                <param name="prioSupply" value="$order.$prioSupply" />
-                <param name="minCargoUsage" value="$order.$minCargoUsage" />
-                <param name="tradeGatePenalty" value="$order.$tradeGatePenalty" />
-                <param name="accountThreshold" value="$order.$accountThreshold" />
-            </run_script>
-        </do_if>
-    </add>
+  <add sel="//do_if[@value='(@$orderdef and $createdefaultorder?) or not $order.requiredskill or (this.combinedskill ge $order.requiredskill)']">
+    <do_if value="$order.id == 'WarehouseFleet'">
+      <set_value name="$added" />
+      <run_script name="$scriptname">
+        <param name="sourceStation" value="$order.$sourceStation" />
+        <param name="targets" value="$order.$targets" />
+        <param name="targetsM" value="$order.$targetsM" />
+        <param name="targetsL" value="$order.$targetsL" />
+        <param name="supplyTargets" value="$order.$supplyTargets" />
+        <param name="prioDistribution" value="$order.$prioDistribution" />
+        <param name="prioTrade" value="$order.$prioTrade" />
+        <param name="prioSupply" value="$order.$prioSupply" />
+        <param name="minCargoUsage" value="$order.$minCargoUsage" />
+        <param name="tradeGatePenalty" value="$order.$tradeGatePenalty" />
+        <param name="accountThreshold" value="$order.$accountThreshold" />
+      </run_script>
+    </do_if>
+  </add>
 </diff>

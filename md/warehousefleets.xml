@@ -534,7 +534,7 @@
                 else $ship.cargo.capacity.container" />
               <set_value name="$maxWareAmount" exact="$shipCapacity / $providerOffer.ware.volume" />
               <do_if value="$maxWareAmount le 0">
-                <continue comment="Schiff kann diese Ware nicht transportieren"/>
+                <continue comment="Schiff kann diese Ware nicht transportieren" />
               </do_if>
 
               <!-- Unprofitable Trades kann man hier schon erkennen und abbrechen -->
@@ -620,7 +620,8 @@
               <set_value name="$completesBuildRequest" exact="$transportType == 'supply' and $receiver.class == class.buildstorage and $receiverOffer.desiredamount == $amount" />
               <set_value name="$rating" exact="$importance * if ($completesBuildRequest) then ($shipCapacity) else ($amount * $providerOffer.ware.volume)" />
 
-              <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'" text="'  '
+              <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'"
+                text="'  '
                   + '[' + $transportType + ' ' + $provider.idcode + ' -> ' + $receiver.idcode + ' ' + $providerOffer.ware + '] '
                   + 'importance = ' + '%.3s'.[$importance]
                   + ', rating = ' + '%.3s'.[$rating]
@@ -638,7 +639,8 @@
                   + ', amount = ' + $amount
                   + ', gd = ' + @$gd
                   + ', cargoUsage = ' + '%.1s'.[100.0 * $cargoUsage] + '%'
-                " output="false" append="true" />
+                "
+                output="false" append="true" />
 
               <do_if value="$amount * $providerOffer.ware.volume lt 0.1 * $shipCapacity">
                 <continue comment="Ware ignorieren, falls wir nicht mindestens 10% des Schiffes damit beladen können" />
