@@ -38,7 +38,16 @@ To make this work, every warehouse gets assigned a "WarehouseFleet", composed of
 | Prio: Supply Build Storage | Set to high values to generally favor supplying build storages over other tasks. |
 | Prio: Trade  | Set to high values to generally favor trading over other tasks. |
 | Trades: Gate Penalty (%) | Reduces the attractivity of trades in other sectors to keep travel distances short. |
-| Account Threshold | Buying wares from NPC stations will only be allowed if it leaves the player account with more money than this setting. This setting will be synchronized between all WarehouseFleets! |
+
+## Global Settings
+
+The global settings can be found in the "Extension Options" via the menu.
+
+| Parameter | Description |
+| --- | --- |
+| Player Account Threshold | Configures the minimum amount of money that should be left to the player, since buying missing wares from NPC traders can quickly drain your account. |
+| Auto-transfer money | Regularly transfer money from station accounts to the player, if at least 10% above the operating budget of the station |
+| Cargo emptying routine | Sometimes trades can fail, leaving ships with remaining cargo - this can be resolved in different ways. Check the ingame tooltip for available options. |
 
 ## Warehouses, Trade Wares and Restrictions
 
@@ -87,5 +96,4 @@ If a warehouse has unrestricted sell offers, NPC traders can also buy directly f
 ## Known Problems
 
 - When defining the targets of a newly created fleet, the game UI sometimes crashes and resets itself. I have no idea why this happens. Seems to be a bug in the game. It is recommended to save before editing this parameter.
-- When creating a new WarehouseFleet, the account threshold parameter is initalized with a default value. Remember to always adjust this value before saving, because it will be synced to all other fleets.
 - Setting up the trades of the warehouses is a bit tedious at the moment, because it has to be done one by one in each warehouse. I don't know if there is a good solution to this problem.

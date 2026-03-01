@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language>
+  <page id="1223613" voice="no">
+    <!-- order -->
+    <t id="12300">Home Warehouse</t>
+    <t id="12301">Targets</t>
+    <t id="12302">Targets \(XL\)</t>
+    <t id="12303">Targets \(L\)</t>
+    <t id="12304">Targets \(M\)</t>
+    <t id="12305">Supply Target</t>
+    <t id="12306">Min. Cargo Usage \(%\)</t>
+    <t id="12307">Prio: Distribute</t>
+    <t id="12308">Prio: Supply</t>
+    <t id="12309">Prio: Trade</t>
+    <t id="12310">Trades: Gate Penalty \(%\)</t>
+    <!-- config -->
+    <t id="36700">WarehouseFleets</t>
+    <t id="36701">Player Account Threshold</t>
+    <t id="46701">WarehouseFleet ships will only buy from NPC stations if the player account will remain above this threshold</t>
+    <t id="36702">Auto-transfer money</t>
+    <t id="46702">Enable auto-transfer of excess credits from warehouse accounts to player account</t>
+    <t id="36706">Cargo emptying routine</t>
+    <t id="46706">Trade orders may fail and leave cargo unhandled in the ships. Select the method of cargo auto-handling below\n\n</t>
+    <t id="36707">Refund (Default)</t>
+    <t id="46707">Refund: Wares are refunded back to the player based on their average prices. Shows up as a transfer on the transaction log\n\n</t>
+    <t id="36708">Teleport</t>
+    <t id="46708">Teleport: wares are teleported to the warehouse\n\n</t>
+    <t id="36709">Destroy</t>
+    <t id="46709">Destroy: wares are destroyed\n\n</t>
+    <t id="36710">Return</t>
+    <t id="46710">Return: wares are returned to the warehouse through trade orders\n\n</t>
+    <t id="36711">Drop</t>
+    <t id="46711">Drop: wares are dropped\n\n</t>
+  </page>
+</language>
