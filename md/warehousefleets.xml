@@ -251,7 +251,7 @@
             <param name="ship" value="$ship" />
           </run_actions>
         </do_if>
-        <do_if value="$ship.isclass.ship_m or $ship.isclass.ship_l">
+        <do_if value="$ship.isclass.ship_m or $ship.isclass.ship_l or $ship.isclass.ship_xl">
           <run_actions ref="AddStations">
             <param name="stations" value="$targetStations" />
             <param name="newTargets" value="$order.$targets" />
@@ -265,7 +265,7 @@
             <param name="ship" value="$ship" />
           </run_actions>
         </do_if>
-        <do_elseif value="$ship.isclass.ship_l">
+        <do_elseif value="$ship.isclass.ship_l or $ship.isclass.ship_xl">
           <run_actions ref="AddStations">
             <param name="stations" value="$targetStations" />
             <param name="newTargets" value="$order.$targetsL" />
