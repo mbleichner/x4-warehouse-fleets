@@ -1,43 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/aiscripts.xsd" version="41">
+<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/aiscripts.xsd" version="42">
 
   <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
     <params>
 
-      <param name="sourceStation" required="true" type="object" text="{1223613,12300}">
+      <param name="sourceStation" required="true" type="object" text="Home Warehouse">
         <input_param name="class" value="[class.station]" />
         <input_param name="owner" value="this.ship.trueowner" />
       </param>
-      <param name="targets" type="list" default="[]" text="{1223613,12301}">
+      <param name="targets" type="list" default="[]" text="Targets (all ships)">
         <input_param name="type" value="'object'" />
       </param>
-      <param name="targetsL" type="list" default="[]" text="{1223613,12303}">
+      <param name="targetsL" type="list" default="[]" text="Targets (L only)">
         <input_param name="type" value="'object'" />
       </param>
-      <param name="targetsM" type="list" default="[]" text="{1223613,12304}">
+      <param name="targetsM" type="list" default="[]" text="Targets (M only)">
         <input_param name="type" value="'object'" />
       </param>
-      <param name="supplyTargets" type="list" default="[]" text="{1223613,12305}">
+      <param name="supplyTargets" type="list" default="[]" text="Supply Targets">
         <input_param name="type" value="'object'" />
+        <patch sinceversion="38" value="[]" />
       </param>
 
-      <param name="minCargoUsage" default="50" type="number" text="{1223613,12306}">
+      <param name="minCargoUsage" default="50" type="number" text="Min. Cargo Usage (%)">
         <input_param name="min" value="10" />
         <input_param name="max" value="100" />
       </param>
-      <param name="prioDistribution" default="5" type="number" text="{1223613,12307}">
+      <param name="prioDistribution" default="5" type="number" text="Prio: Distribute">
         <input_param name="min" value="0" />
         <input_param name="max" value="10" />
       </param>
-      <param name="prioSupply" default="5" type="number" text="{1223613,12308}">
+      <param name="prioTrade" default="5" type="number" text="Prio: Trade" >
         <input_param name="min" value="0" />
         <input_param name="max" value="10" />
       </param>
-      <param name="prioTrade" default="5" type="number" text="{1223613,12309}">
+      <param name="prioSupply" default="5" type="number" text="Prio: Supply">
         <input_param name="min" value="0" />
         <input_param name="max" value="10" />
+        <patch sinceversion="38" value="5" />
       </param>
-      <param name="tradeGatePenalty" default="20" type="number" text="{1223613,12310}">
+      <param name="prioBuild" default="7" type="number" text="Prio: Build">
+        <input_param name="min" value="0" />
+        <input_param name="max" value="10" />
+        <patch sinceversion="42" value="7" />
+      </param>
+      <param name="tradeGatePenalty" default="20" type="number" text="Trade Gate Penalty (%)">
         <input_param name="min" value="0" />
         <input_param name="max" value="90" />
       </param>
@@ -63,11 +70,6 @@
   <init>
     <set_order_syncpoint_reached order="this.assignedcontrolled.order" />
   </init>
-
-  <patch sinceversion="38">
-    <set_value name="$prioSupply" exact="5" />
-    <set_value name="$supplyTargets" exact="[]" />
-  </patch>
 
   <attention min="unknown">
     <actions>

@@ -12,6 +12,7 @@
         <param name="prioDistribution" value="$order.$prioDistribution" />
         <param name="prioTrade" value="$order.$prioTrade" />
         <param name="prioSupply" value="$order.$prioSupply" />
+        <param name="prioBuild" value="$order.$prioBuild" />
         <param name="minCargoUsage" value="$order.$minCargoUsage" />
         <param name="tradeGatePenalty" value="$order.$tradeGatePenalty" />
       </run_script>

@@ -35,9 +35,9 @@
         <set_value name="global.$WarehouseFleets.$waitInDockS" exact="true" />
         <set_value name="global.$WarehouseFleets.$waitInDockM" exact="true" />
         <set_value name="global.$WarehouseFleets.$waitInDockL" exact="false" />
-        <remove_value name="$accountThreshold"  />
-        <remove_value name="$transferToPlayer"  />
-        <remove_value name="$failedOrderHandling"  />
+        <remove_value name="$accountThreshold" />
+        <remove_value name="$transferToPlayer" />
+        <remove_value name="$failedOrderHandling" />
       </patch>
     </cue>
 
@@ -599,7 +599,7 @@
                 then [[100.0 * ($receiverCargo  + $receiverReservations) / $receiverCapacity, 100.0].min, 0.0].max
                 else 100.0" />
 
-              <!-- Bei Distribution Transportes die maximale sinnvolle Menge berechnen (es soll maximal soviel transportiert werden, dass die Mengen danach ausgeglichen sind) -->
+              <!-- Bei Distribution Transports die maximale sinnvolle Menge berechnen (es soll maximal soviel transportiert werden, dass die Mengen danach ausgeglichen sind) -->
               <do_if value="$transportType == 'distribution'">
                 <set_value name="$equalizingAmount" exact="(
                   ($providerCargo + $providerReservations) * (($receiverCapacity)LF / ($providerCapacity + $receiverCapacity))
@@ -624,7 +624,12 @@
                 <set_value name="$importance" exact="($providerCargoRatio - $receiverCargoRatio) * (1.0 - $receiverCargoRatio/200.0) * ($order.$prioDistribution/10f)" />
               </do_if>
               <do_if value="$transportType == 'supply'">
-                <set_value name="$importance" exact="0.5 * (1.0 - $receiverCargoRatio/200.0) * $order.$prioSupply^2 * (if ($receiver.class == class.buildstorage) then 2 else 1)" />
+                <do_if value="$receiver.class == class.buildstorage">
+                  <set_value name="$importance" exact="0.5 * (1.0 - $receiverCargoRatio/200.0) * $order.$prioBuild^2" />
+                </do_if>
+                <do_else>
+                  <set_value name="$importance" exact="0.5 * (1.0 - $receiverCargoRatio/200.0) * $order.$prioSupply^2" />
+                </do_else>
               </do_if>
               <do_if value="$transportType == 'trade'">
                 <set_value name="$storageLevelRating" exact="[[if $provider.idcode == $order.$sourceStation.idcode then $providerCargoRatio else (100f - $receiverCargoRatio), 100.0].min, 0.0].max" />

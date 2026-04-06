@@ -10,7 +10,7 @@
           param="table[
             $id = 'WarehouseFleetsConfigMenu',
             $columns = 2,
-            $title = {1223613, 36700},
+            $title = 'WarehouseFleets',
             $onOpen = BuildWarehouseFleetConfigMenu,
           ]" />
         <cancel_cue cue="this" />
@@ -23,7 +23,7 @@
       <actions>
 
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36701}]" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Player Account Threshold']" />
         <signal_cue_instantly
           cue="md.Simple_Menu_API.Make_Slider"
           param="table[
@@ -33,13 +33,13 @@
             $text = table[$text=''],
             $min = 0, $max = 100, $suffix = 'M',
             $default = 1,
-            $mouseOverText = {1223613, 46701},
+            $mouseOverText = 'WarehouseFleet ships will only buy from NPC stations if the player account will remain above this threshold',
             $onSliderCellConfirm = OnUpdateValue
           ]"
         />
 
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36702}]" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Auto-transfer money']" />
         <signal_cue_instantly
           cue="md.Simple_Menu_API.Make_CheckBox"
           param="table[
@@ -49,38 +49,38 @@
             $width = 'Helper.standardButtonHeight', 
             $height = 'Helper.standardButtonHeight',
             $default = false,
-            $mouseOverText = {1223613, 46702},
+            $mouseOverText = 'Enable auto-transfer of excess credits from warehouse accounts to player account',
             $onClick = OnUpdateCheckbox
           ]"
         />
 
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36706}]" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Cargo emptying routine']" />
         <signal_cue_instantly
           cue="md.Simple_Menu_API.Make_Dropdown"
           param="table[
               $id = 'failedOrderHandling',
               $col = 2,
               $options = [
-                table[$text={1223613, 36707}, $value=1],
-                table[$text={1223613, 36708}, $value=2],
-                table[$text={1223613, 36709}, $value=3],
-                table[$text={1223613, 36710}, $value=4],
-                table[$text={1223613, 36711}, $value=5]
+                table[$text='Refund (Default)', $value=1],
+                table[$text='Teleport', $value=2],
+                table[$text='Destroy',  $value=3],
+                table[$text='Return',   $value=4],
+                table[$text='Drop',     $value=5]
               ],
               $startOption = global.$WarehouseFleets.$failedOrderHandling,
-              $mouseOverText = {1223613, 46706} + 
-                               {1223613, 46707} +
-                               {1223613, 46708} +
-                               {1223613, 46709} +
-                               {1223613, 46710} +
-                               {1223613, 46711},
+              $mouseOverText = 'Trade orders may fail and leave cargo unhandled in the ships. Select the method of cargo auto-handling below:\n\n' + 
+                'Refund: Wares are refunded back to the player based on their average prices. Shows up as a transfer on the transaction log\n\n' +
+                'Teleport: wares are teleported to the warehouse\n\n'+ 
+                'Destroy: wares are destroyed\n\n'+
+                'Return: wares are returned to the warehouse through trade orders\n\n'+
+                'Drop: wares are dropped',
               $onDropDownConfirmed = OnUpdateDropdown
           ]" />
 
 
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36703}]" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Dock idle S-sized ships']" />
         <signal_cue_instantly
           cue="md.Simple_Menu_API.Make_CheckBox"
           param="table[
@@ -90,13 +90,13 @@
             $width = 'Helper.standardButtonHeight',
             $height = 'Helper.standardButtonHeight',
             $default = false,
-            $mouseOverText = {1223613, 46703},
+            $mouseOverText = 'S-sized ships should dock at their home warehouse while waiting for new delivery jobs',
             $onClick = OnUpdateCheckbox
           ]"
         />
 
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36704}]" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Dock idle M-sized ships']" />
         <signal_cue_instantly
           cue="md.Simple_Menu_API.Make_CheckBox"
           param="table[
@@ -106,13 +106,13 @@
             $width = 'Helper.standardButtonHeight',
             $height = 'Helper.standardButtonHeight',
             $default = false,
-            $mouseOverText = {1223613, 46704},
+            $mouseOverText = 'M-sized ships should dock at their home warehouse while waiting for new delivery jobs',
             $onClick = OnUpdateCheckbox
           ]"
         />
 
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36705}]" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Dock idle L-sized ships']" />
         <signal_cue_instantly
           cue="md.Simple_Menu_API.Make_CheckBox"
           param="table[
@@ -122,7 +122,7 @@
             $width = 'Helper.standardButtonHeight',
             $height = 'Helper.standardButtonHeight',
             $default = false,
-            $mouseOverText = {1223613, 46705},
+            $mouseOverText = 'L-sized ships should dock at their home warehouse while waiting for new delivery jobs',
             $onClick = OnUpdateCheckbox
           ]"
         />
