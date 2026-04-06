@@ -21,36 +21,39 @@
         <event_cue_signalled />
       </conditions>
       <actions>
-        <debug_text text="''" />
+
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
         <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36701}]" />
         <signal_cue_instantly
           cue="md.Simple_Menu_API.Make_Slider"
           param="table[
             $id = 'accountThreshold',
-            $start = md.WarehouseFleets.Config.$accountThreshold,
+            $start = global.$WarehouseFleets.$accountThreshold,
             $col = 2,
             $text = table[$text=''],
             $min = 0, $max = 100, $suffix = 'M',
             $default = 1,
-            $mouseOverText = {1223613, 46701} + '\n\n' + {1001, 3231} + ': 1',
-            $onSliderCellConfirm = OnUpdateAccountThreshold
+            $mouseOverText = {1223613, 46701},
+            $onSliderCellConfirm = OnUpdateValue
           ]"
         />
+
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
         <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36702}]" />
         <signal_cue_instantly
           cue="md.Simple_Menu_API.Make_CheckBox"
           param="table[
             $id = 'transferToPlayer',
-            $checked = md.WarehouseFleets.Config.$transferToPlayer,
+            $checked = global.$WarehouseFleets.$transferToPlayer,
             $col = 2,
-            $width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+            $width = 'Helper.standardButtonHeight', 
+            $height = 'Helper.standardButtonHeight',
             $default = false,
-            $mouseOverText = {1223613, 46702} + '\n\n' + {1001, 3231} + ': ' + {1001, 2649},
-            $onClick = OnUpdateTransferToPlayer
+            $mouseOverText = {1223613, 46702},
+            $onClick = OnUpdateCheckbox
           ]"
         />
+
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
         <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36706}]" />
         <signal_cue_instantly
@@ -65,40 +68,92 @@
                 table[$text={1223613, 36710}, $value=4],
                 table[$text={1223613, 36711}, $value=5]
               ],
-              $startOption = md.WarehouseFleets.Config.$failedOrderHandling,
+              $startOption = global.$WarehouseFleets.$failedOrderHandling,
               $mouseOverText = {1223613, 46706} + 
                                {1223613, 46707} +
                                {1223613, 46708} +
                                {1223613, 46709} +
                                {1223613, 46710} +
                                {1223613, 46711},
-              $onDropDownConfirmed = OnUpdateFailedOrderHandling
+              $onDropDownConfirmed = OnUpdateDropdown
           ]" />
+
+
+        <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36703}]" />
+        <signal_cue_instantly
+          cue="md.Simple_Menu_API.Make_CheckBox"
+          param="table[
+            $id = 'waitInDockS',
+            $checked = global.$WarehouseFleets.$waitInDockS,
+            $col = 2,
+            $width = 'Helper.standardButtonHeight',
+            $height = 'Helper.standardButtonHeight',
+            $default = false,
+            $mouseOverText = {1223613, 46703},
+            $onClick = OnUpdateCheckbox
+          ]"
+        />
+
+        <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36704}]" />
+        <signal_cue_instantly
+          cue="md.Simple_Menu_API.Make_CheckBox"
+          param="table[
+            $id = 'waitInDockM',
+            $checked = global.$WarehouseFleets.$waitInDockM,
+            $col = 2,
+            $width = 'Helper.standardButtonHeight',
+            $height = 'Helper.standardButtonHeight',
+            $default = false,
+            $mouseOverText = {1223613, 46704},
+            $onClick = OnUpdateCheckbox
+          ]"
+        />
+
+        <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1223613, 36705}]" />
+        <signal_cue_instantly
+          cue="md.Simple_Menu_API.Make_CheckBox"
+          param="table[
+            $id = 'waitInDockL',
+            $checked = global.$WarehouseFleets.$waitInDockL,
+            $col = 2,
+            $width = 'Helper.standardButtonHeight',
+            $height = 'Helper.standardButtonHeight',
+            $default = false,
+            $mouseOverText = {1223613, 46705},
+            $onClick = OnUpdateCheckbox
+          ]"
+        />
+
       </actions>
     </cue>
-    <cue name="OnUpdateTransferToPlayer" instantiate="true">
+
+    <cue name="OnUpdateCheckbox" instantiate="true">
       <conditions>
         <event_cue_signalled />
       </conditions>
       <actions>
-        <set_value name="md.WarehouseFleets.Config.$transferToPlayer" exact="event.param.$checked" />
+        <set_value name="global.$WarehouseFleets.{'$' + event.param.$id}" exact="event.param.$checked" />
       </actions>
     </cue>
-    <cue name="OnUpdateFailedOrderHandling" instantiate="true">
+    <cue name="OnUpdateDropdown" instantiate="true">
       <conditions>
         <event_cue_signalled />
       </conditions>
       <actions>
-        <set_value name="md.WarehouseFleets.Config.$failedOrderHandling" exact="event.param.$option.$value" />
+        <set_value name="global.$WarehouseFleets.{'$' + event.param.$id}" exact="event.param.$option.$value" />
       </actions>
     </cue>
-    <cue name="OnUpdateAccountThreshold" instantiate="true">
+    <cue name="OnUpdateValue" instantiate="true">
       <conditions>
         <event_cue_signalled />
       </conditions>
       <actions>
-        <set_value name="md.WarehouseFleets.Config.$accountThreshold" exact="event.param.$value" />
+        <set_value name="global.$WarehouseFleets.{'$' + event.param.$id}" exact="event.param.$value" />
       </actions>
     </cue>
+
   </cues>
 </mdscript>

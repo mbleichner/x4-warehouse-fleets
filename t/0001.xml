@@ -3,8 +3,7 @@
   <page id="1223613" voice="no">
     <!-- order -->
     <t id="12300">Home Warehouse</t>
-    <t id="12301">Targets</t>
-    <t id="12302">Targets \(XL\)</t>
+    <t id="12301">Targets \(All ships\)</t>
     <t id="12303">Targets \(L\)</t>
     <t id="12304">Targets \(M\)</t>
     <t id="12305">Supply Target</t>
@@ -19,6 +18,12 @@
     <t id="46701">WarehouseFleet ships will only buy from NPC stations if the player account will remain above this threshold</t>
     <t id="36702">Auto-transfer money</t>
     <t id="46702">Enable auto-transfer of excess credits from warehouse accounts to player account</t>
+    <t id="36703">Dock S-sized when idle</t>
+    <t id="46703">S-sized ships after job completion while waiting for new delivery jobs</t>
+    <t id="36704">Dock M-sized when idle</t>
+    <t id="46704">M-sized ships after job completion while waiting for new delivery jobs</t>
+    <t id="36705">Dock L-sized ships when idle</t>
+    <t id="46705">L-sized ships after job completion while waiting for new delivery jobs</t>
     <t id="36706">Cargo emptying routine</t>
     <t id="46706">Trade orders may fail and leave cargo unhandled in the ships. Select the method of cargo auto-handling below\n\n</t>
     <t id="36707">Refund (Default)</t>

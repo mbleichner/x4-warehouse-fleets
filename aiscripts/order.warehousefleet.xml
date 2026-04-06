@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/aiscripts.xsd" version="40">
+<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/aiscripts.xsd" version="41">
 
   <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
     <params>
@@ -71,24 +71,36 @@
 
   <attention min="unknown">
     <actions>
-
-      <!-- Scheduling versuchen -->
-      <set_command command="command.searchtrades" />
-      <set_command_action commandaction="commandaction.searchingtrades" />
-      <signal_objects object="player.entity" param="'WarehouseFleets'" param2="'RequestScheduling'" param3="this.ship" />
-
-      <!-- An Home Station docken -->
-      <set_command_action commandaction="commandaction.docking" />
-      <run_script name="'order.dock'" result="$docksuccess">
-        <param name="destination" value="$sourceStation" />
-        <param name="trading" value="true" />
-      </run_script>
-
-      <!-- Regelmäßig neue Schedulings versuchen -->
       <do_while value="true">
+
+        <!-- Request Scheduling -->
         <set_command_action commandaction="commandaction.searchingtrades" />
         <signal_objects object="player.entity" param="'WarehouseFleets'" param2="'RequestScheduling'" param3="this.ship" />
+
+        <set_value name="$waitInDock" exact="
+            (global.$WarehouseFleets.$waitInDockS and this.ship.isclass.ship_s) or
+            (global.$WarehouseFleets.$waitInDockM and this.ship.isclass.ship_m) or
+            (global.$WarehouseFleets.$waitInDockL and (this.ship.isclass.ship_l or this.ship.isclass.ship_xl))
+        " />
+
+        <set_value name="$shouldDock" exact="$waitInDock and this.ship.dock == null" />
+        <set_value name="$shouldUndock" exact="not $waitInDock and this.ship.dock != null" />
+
+        <do_if value="$shouldDock">
+          <set_command_action commandaction="commandaction.docking" />
+          <run_script name="'order.dock'">
+            <param name="destination" value="$sourceStation" />
+            <param name="trading" value="true" />
+          </run_script>
+        </do_if>
+
+        <do_if value="$shouldUndock">
+          <set_command_action commandaction="commandaction.undocking" />
+          <run_script name="'move.undock'" />
+        </do_if>
+
         <wait min="30s" max="60s" />
+
       </do_while>
     </actions>
   </attention>
