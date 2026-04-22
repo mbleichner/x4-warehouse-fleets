@@ -23,7 +23,7 @@
       </param>
 
       <param name="minCargoUsage" default="50" type="number" text="Min. Cargo Usage (%)">
-        <input_param name="min" value="10" />
+        <input_param name="min" value="0" />
         <input_param name="max" value="100" />
       </param>
       <param name="prioDistribution" default="5" type="number" text="Prio: Distribute">
