@@ -12,7 +12,7 @@
       </actions>
     </cue>
 
-    <cue name="Config" version="4">
+    <cue name="Config" version="5">
       <conditions>
         <check_any>
           <event_cue_signalled cue="md.Setup.GameStart" />
@@ -20,6 +20,16 @@
           <event_game_loaded />
         </check_any>
       </conditions>
+
+      <actions>
+        <set_value name="global.$WarehouseFleets" exact="table[]" />
+        <set_value name="global.$WarehouseFleets.$accountThreshold" exact="1" />
+        <set_value name="global.$WarehouseFleets.$transferToPlayer" exact="true" />
+        <set_value name="global.$WarehouseFleets.$failedOrderHandling" exact="1" />
+        <set_value name="global.$WarehouseFleets.$waitInDockS" exact="true" />
+        <set_value name="global.$WarehouseFleets.$waitInDockM" exact="true" />
+        <set_value name="global.$WarehouseFleets.$waitInDockL" exact="false" />
+      </actions>
 
       <patch sinceversion="3">
         <set_value name="$accountThreshold" exact="1" />
@@ -38,6 +48,19 @@
         <remove_value name="$accountThreshold" />
         <remove_value name="$transferToPlayer" />
         <remove_value name="$failedOrderHandling" />
+      </patch>
+
+      <patch sinceversion="5">
+        <do_if value="@global.$WarehouseFleets == null">
+          <debug_to_file chance="global.$debugchance" name="'scheduler'" directory="'WarehouseFleets'" text="'Fixing WarehouseFleets settings'" output="false" append="true" />
+          <set_value name="global.$WarehouseFleets" exact="table[]" />
+          <set_value name="global.$WarehouseFleets.$accountThreshold" exact="1" />
+          <set_value name="global.$WarehouseFleets.$transferToPlayer" exact="true" />
+          <set_value name="global.$WarehouseFleets.$failedOrderHandling" exact="1" />
+          <set_value name="global.$WarehouseFleets.$waitInDockS" exact="true" />
+          <set_value name="global.$WarehouseFleets.$waitInDockM" exact="true" />
+          <set_value name="global.$WarehouseFleets.$waitInDockL" exact="false" />
+        </do_if>
       </patch>
     </cue>
 

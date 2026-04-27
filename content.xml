@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<content id="WarehouseFleets" name="Warehouse Fleets" description="Warehouse Fleets" author="mbleichner" version="109" date="2026-04-22" save="0">
+<content id="WarehouseFleets" name="Warehouse Fleets" description="Warehouse Fleets" author="mbleichner" version="110" date="2026-04-27" save="0">
   <dependency id="ws_2042901274" optional="false" name="SirNukes Mod Support APIs" />
 </content>
