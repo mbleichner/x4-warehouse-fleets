@@ -559,7 +559,7 @@
 
               <set_value name="$transportType" exact="
                 if $order.$supplyTargets.indexof.{$receiver} > 0 then 'supply'
-                else if $receiver.trueowner == faction.player and $receiver.class == class.buildstorage then 'supply'
+                else if $receiver.trueowner == faction.player and $receiver.class == class.buildstorage then 'build'
                 else if $provider.trueowner == faction.player and $receiver.trueowner == faction.player then 'distribution'
                 else 'trade'
               " />
@@ -622,37 +622,41 @@
                 then [[100.0 * ($receiverCargo  + $receiverReservations) / $receiverCapacity, 100.0].min, 0.0].max
                 else 100.0" />
 
-              <!-- Bei Distribution Transports die maximale sinnvolle Menge berechnen (es soll maximal soviel transportiert werden, dass die Mengen danach ausgeglichen sind) -->
+              <!-- Berechnung der Waren-Menge ($amount) -->
               <do_if value="$transportType == 'distribution'">
+                <!-- Bei Distribution Transports die maximale sinnvolle Menge berechnen (es soll maximal soviel transportiert werden, dass die Mengen danach ausgeglichen sind) -->
                 <set_value name="$equalizingAmount" exact="(
                   ($providerCargo + $providerReservations) * (($receiverCapacity)LF / ($providerCapacity + $receiverCapacity))
                 - ($receiverCargo + $receiverReservations) * (($providerCapacity)LF / ($providerCapacity + $receiverCapacity))
                 )i" />
                 <set_value name="$amount" exact="[[$maxWareAmount, $equalizingAmount].min, 0].max" />
               </do_if>
-              <do_elseif value="$transportType == 'supply'">
+              <do_if value="$transportType == 'supply' or $transportType == 'build'">
+                <!-- Bei supply/build die maximal mögliche Menge transportieren (unabhängig davon, ob diese "bezahlt" werden kann) -->
                 <set_value name="$amount" exact="[[$maxWareAmount, $providerOffer.amount, $receiverOffer.desiredamount].min, 0].max" />
-              </do_elseif>
-              <do_elseif value="$provider.trueowner != faction.player">
-                <!-- Ankauf von Waren - hier berechnen wir die Einkaufsmenge selbst, denn die BuyOffers können aufgrund fehlender Stationsbudgets wesentlich zu niedrig sein -->
-                <set_value name="$buyAmount" exact="[(player.money - global.$WarehouseFleets.$accountThreshold * 1000000Cr)L / ($receiverOffer.unitprice)i, $receiverOffer.desiredamount].min" />
-                <set_value name="$amount" exact="[[$maxWareAmount, $providerOffer.amount, $buyAmount].min, 0].max" />
-              </do_elseif>
-              <do_else>
-                <set_value name="$amount" exact="[[$maxWareAmount, $providerOffer.amount, $receiverOffer.amount].min, 0].max" />
-              </do_else>
+              </do_if>
+              <do_if value="$transportType == 'trade'">
+                <do_if value="$provider.trueowner != faction.player">
+                  <!-- Ankauf von Waren - hier berechnen wir die Einkaufsmenge selbst, denn die BuyOffers können aufgrund fehlender Stationsbudgets wesentlich zu niedrig sein -->
+                  <set_value name="$buyAmount" exact="[(player.money - global.$WarehouseFleets.$accountThreshold * 1000000Cr)L / ($receiverOffer.unitprice)i, $receiverOffer.desiredamount].min" />
+                  <set_value name="$amount" exact="[[$maxWareAmount, $providerOffer.amount, $buyAmount].min, 0].max" />
+                </do_if>
+                <do_else>
+                  <!-- Verkauf von Waren - maximal abgenommene Menge transportieren -->
+                  <set_value name="$amount" exact="[[$maxWareAmount, $providerOffer.amount, $receiverOffer.amount].min, 0].max" />
+                </do_else>
+              </do_if>
 
               <set_value name="$cargoUsage" exact="($amount)f / $maxWareAmount" />
+
               <do_if value="$transportType == 'distribution'">
                 <set_value name="$importance" exact="($providerCargoRatio - $receiverCargoRatio) * (1.0 - $receiverCargoRatio/200.0) * ($order.$prioDistribution/10f)" />
               </do_if>
               <do_if value="$transportType == 'supply'">
-                <do_if value="$receiver.class == class.buildstorage">
-                  <set_value name="$importance" exact="0.5 * (1.0 - $receiverCargoRatio/200.0) * $order.$prioBuild^2" />
-                </do_if>
-                <do_else>
-                  <set_value name="$importance" exact="0.5 * (1.0 - $receiverCargoRatio/200.0) * $order.$prioSupply^2" />
-                </do_else>
+                <set_value name="$importance" exact="0.5 * (1.0 - $receiverCargoRatio/200.0) * $order.$prioSupply^2" />
+              </do_if>
+              <do_if value="$transportType == 'build'">
+                <set_value name="$importance" exact="0.5 * (1.0 - $receiverCargoRatio/200.0) * $order.$prioBuild^2" />
               </do_if>
               <do_if value="$transportType == 'trade'">
                 <set_value name="$storageLevelRating" exact="[[if $provider.idcode == $order.$sourceStation.idcode then $providerCargoRatio else (100f - $receiverCargoRatio), 100.0].min, 0.0].max" />
@@ -660,7 +664,7 @@
                 <set_value name="$importance" exact="0.5 * ([100f * $profitRatio, 0].max + $storageLevelRating/100.0) * ($order.$tradeGatePenalty/100f) ^ $gd * ($order.$prioTrade/10f)" />
               </do_if>
 
-              <set_value name="$completesBuildRequest" exact="$transportType == 'supply' and $receiver.class == class.buildstorage and $receiverOffer.desiredamount == $amount" />
+              <set_value name="$completesBuildRequest" exact="$transportType == 'build' and $receiverOffer.desiredamount == $amount" />
               <set_value name="$rating" exact="$importance * if ($completesBuildRequest) then ($shipCapacity) else ($amount * $providerOffer.ware.volume)" />
 
               <debug_to_file chance="global.$debugchance" name="$ship.idcode" directory="'WarehouseFleets'"
@@ -682,15 +686,16 @@
                   + ', amount = ' + $amount
                   + ', gd = ' + @$gd
                   + ', cargoUsage = ' + '%.1s'.[100.0 * $cargoUsage] + '%'
+                  + ', completesBuildRequest = ' + $completesBuildRequest
                 "
                 output="false" append="true" />
 
-              <do_if value="$amount * $providerOffer.ware.volume lt 0.1 * $shipCapacity">
-                <continue comment="Ware ignorieren, falls wir nicht mindestens 10% des Schiffes damit beladen können" />
+              <do_if value="$amount le 0 or $importance le 0">
+                <continue comment="Ware ignorieren, falls der Transport nicht sinnvoll ist" />
               </do_if>
 
-              <do_if value="$importance le 0">
-                <continue comment="Ware ignorieren, falls der Transport nicht sinnvoll ist" />
+              <do_if value="($amount * $providerOffer.ware.volume) lt ($order.$minCargoUsage / 100.0 * $shipCapacity) and (not $completesBuildRequest)">
+                <continue comment="performance optimization to reduce the amount of trades that need to be considered later" />
               </do_if>
 
               <append_to_list name="$possibleTransports" exact="table[
@@ -776,7 +781,7 @@
             </do_if>
           </do_for_each>
 
-          <!-- Falls die minCargoUsage erreicht wurde => als Ergebnis zurckgeben. Ansonsten wird die nächste Relation geprüft -->
+          <!-- Falls die minCargoUsage erreicht wurde => als Ergebnis zurückgeben. Ansonsten wird die nächste Relation geprüft -->
           <set_value name="$cargoUsage" exact="100f * $usedCargoSpace / $ship.cargo.capacity.all" />
           <do_if value="$cargoUsage ge $order.$minCargoUsage or $completesBuildRequest">
             <return value="table[
