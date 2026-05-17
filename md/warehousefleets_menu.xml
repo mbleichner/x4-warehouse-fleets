@@ -22,111 +22,203 @@
       </conditions>
       <actions>
 
+        <signal_cue_instantly cue="AddEmptyRow" />
+        <signal_cue_instantly cue="AddCenteredTextRow" param="table[$text='Global Settings']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddSliderRow" param="table[
+          $id = 'accountThreshold', $min = 0, $max = 100, $suffix = 'M', $default = 1, $text = 'Player Account Threshold (M)', 
+          $mouseOverText = 'WarehouseFleet ships will only buy from NPC stations if the player account will remain above this threshold (value in millions)'
+        ]" />
+
+        <signal_cue_instantly cue="AddCheckboxRow" param="table[
+          $id = 'transferToPlayer', $default = false, $text = 'Auto-transfer money', 
+          $mouseOverText = 'Enable auto-transfer of excess credits from warehouse accounts to player account',
+        ]" />
+
+        <signal_cue_instantly cue="AddDropdownRow" param="table[
+          $id = 'failedOrderHandling',
+          $options = [
+            table[$text='Refund (Default)', $value=1],
+            table[$text='Teleport', $value=2],
+            table[$text='Destroy',  $value=3],
+            table[$text='Return',   $value=4],
+            table[$text='Drop',     $value=5]
+          ],
+          $text = 'Cargo emptying routine',
+          $mouseOverText = 'Trade orders may fail and leave cargo unhandled in the ships. Select the method of cargo auto-handling below:\n\n' + 
+            'Refund: Wares are refunded back to the player based on their average prices. Shows up as a transfer on the transaction log\n\n' +
+            'Teleport: wares are teleported to the warehouse\n\n'+ 
+            'Destroy: wares are destroyed\n\n'+
+            'Return: wares are returned to the warehouse through trade orders\n\n'+
+            'Drop: wares are dropped',
+        ]" />
+
+        <signal_cue_instantly cue="AddEmptyRow" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+        <signal_cue_instantly cue="AddCenteredTextRow" param="table[$text='Default Fleet Settings (applied when creating new WarehouseFleets)']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddSliderRow" param="table[ $id = 'minCargoUsage', $min = 0, $max = 90, $suffix = '%', $default = 50, $text = 'Min. Cargo Usage (%)', $mouseOverText = 'Avoids scheduling inefficient trips. No ship will be scheduled that uses less than the specified cargo space. Setting this value too low can cause performance degradation. Setting the value too high might prevent/delay balancing of low volume wares. Ships supplying build storages may ignore this setting to avoid build jobs getting stuck with only a few materials left.' ]" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'minCargoUsage']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddSliderRow" param="table[ $id = 'tradeGatePenalty', $min = 0, $max = 90, $suffix = '%', $default = 20, $text = 'Trade: Gate Penalty (%)', $mouseOverText = 'Reduces the attractivity of trades in other sectors to keep travel distances short' ]" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'tradeGatePenalty']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddSliderRow" param="table[$id = 'prioDistribution', $min = 0, $max = 10, $suffix = '', $default = 5, $text = 'Prio: Distribute', $mouseOverText = 'Priority of ware distribution jobs']" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'prioDistribution']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddSliderRow" param="table[$id = 'prioTrade', $min = 0, $max = 10, $suffix = '', $default = 5, $text = 'Prio: Trade', $mouseOverText = 'Priority of jobs involving trade with other factions']" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'prioTrade']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddSliderRow" param="table[$id = 'prioSupply', $min = 0, $max = 10, $suffix = '', $default = 5, $text = 'Prio: Supply', $mouseOverText = 'Priority of jobs related to supply targets']" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'prioSupply']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddSliderRow" param="table[$id = 'prioBuild', $min = 0, $max = 10, $suffix = '', $default = 7, $text = 'Prio: Build', $mouseOverText = 'Priority of jobs supplying player-owned build storages']" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'prioBuild']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddCheckboxRow" param="table[$id = 'waitInDockS', $default = true, $text = 'Dock idle S-sized ships', $mouseOverText = 'S-sized ships should dock at their home warehouse while waiting for new delivery jobs']" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'waitInDockS']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddCheckboxRow" param="table[$id = 'waitInDockM', $default = true, $text = 'Dock idle M-sized ships', $mouseOverText = 'M-sized ships should dock at their home warehouse while waiting for new delivery jobs']" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'waitInDockM']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddCheckboxRow" param="table[$id = 'waitInDockL', $default = false, $text = 'Dock idle L-sized ships', $mouseOverText = 'L-sized ships should dock at their home warehouse while waiting for new delivery jobs']" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'waitInDockL']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+      </actions>
+    </cue>
+
+    <cue name="AddEmptyRow" instantiate="true">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" param="table[$selectable=false]" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $colSpan=2, $halign='center', $text=' ']" />
+      </actions>
+    </cue>
+
+    <cue name="AddCheckboxRow" instantiate="true">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Player Account Threshold']" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col = 1, $text = event.param.$text]" />
+        <signal_cue_instantly
+          cue="md.Simple_Menu_API.Make_CheckBox"
+          param="table[
+            $col = 2,
+            $id = event.param.$id,
+            $checked = global.$WarehouseFleets.{'$' + event.param.$id},
+            $width = 'Helper.standardButtonHeight',
+            $height = 'Helper.standardButtonHeight',
+            $default = event.param.$default,
+            $mouseOverText = event.param.$mouseOverText,
+            $onClick = OnUpdateCheckbox,
+          ]"
+        />
+      </actions>
+    </cue>
+
+    <cue name="AddSliderRow" instantiate="true">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col = 1, $text = event.param.$text]" />
         <signal_cue_instantly
           cue="md.Simple_Menu_API.Make_Slider"
           param="table[
-            $id = 'accountThreshold',
-            $start = global.$WarehouseFleets.$accountThreshold,
             $col = 2,
-            $text = table[$text=''],
-            $min = 0, $max = 100, $suffix = 'M',
-            $default = 1,
-            $mouseOverText = 'WarehouseFleet ships will only buy from NPC stations if the player account will remain above this threshold',
-            $onSliderCellConfirm = OnUpdateValue
+            $id = event.param.$id,
+            $start = global.$WarehouseFleets.{'$' + event.param.$id},
+            $min = event.param.$min,
+            $max = event.param.$max,
+            $suffix = event.param.$suffix,
+            $default = event.param.$default,
+            $mouseOverText = event.param.$mouseOverText,
+            $onSliderCellConfirm = OnUpdateSlider,
           ]"
         />
+      </actions>
+    </cue>
 
+    <cue name="AddDropdownRow" instantiate="true">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Auto-transfer money']" />
-        <signal_cue_instantly
-          cue="md.Simple_Menu_API.Make_CheckBox"
-          param="table[
-            $id = 'transferToPlayer',
-            $checked = global.$WarehouseFleets.$transferToPlayer,
-            $col = 2,
-            $width = 'Helper.standardButtonHeight', 
-            $height = 'Helper.standardButtonHeight',
-            $default = false,
-            $mouseOverText = 'Enable auto-transfer of excess credits from warehouse accounts to player account',
-            $onClick = OnUpdateCheckbox
-          ]"
-        />
-
-        <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Cargo emptying routine']" />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col = 1, $text = event.param.$text]" />
         <signal_cue_instantly
           cue="md.Simple_Menu_API.Make_Dropdown"
           param="table[
-              $id = 'failedOrderHandling',
-              $col = 2,
-              $options = [
-                table[$text='Refund (Default)', $value=1],
-                table[$text='Teleport', $value=2],
-                table[$text='Destroy',  $value=3],
-                table[$text='Return',   $value=4],
-                table[$text='Drop',     $value=5]
-              ],
-              $startOption = global.$WarehouseFleets.$failedOrderHandling,
-              $mouseOverText = 'Trade orders may fail and leave cargo unhandled in the ships. Select the method of cargo auto-handling below:\n\n' + 
-                'Refund: Wares are refunded back to the player based on their average prices. Shows up as a transfer on the transaction log\n\n' +
-                'Teleport: wares are teleported to the warehouse\n\n'+ 
-                'Destroy: wares are destroyed\n\n'+
-                'Return: wares are returned to the warehouse through trade orders\n\n'+
-                'Drop: wares are dropped',
-              $onDropDownConfirmed = OnUpdateDropdown
+            $col = 2,  
+            $id = event.param.$id,
+            $options = event.param.$options,
+            $startOption = global.$WarehouseFleets.{'$' + event.param.$id},
+            $mouseOverText = event.param.$mouseOverText,
+            $onDropDownConfirmed = OnUpdateDropdown,
           ]" />
+      </actions>
+    </cue>
 
-
+    <cue name="AddSyncButtonRow" instantiate="true">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Dock idle S-sized ships']" />
         <signal_cue_instantly
-          cue="md.Simple_Menu_API.Make_CheckBox"
+          cue="md.Simple_Menu_API.Make_Button"
           param="table[
-            $id = 'waitInDockS',
-            $checked = global.$WarehouseFleets.$waitInDockS,
             $col = 2,
-            $width = 'Helper.standardButtonHeight',
-            $height = 'Helper.standardButtonHeight',
-            $default = false,
-            $mouseOverText = 'S-sized ships should dock at their home warehouse while waiting for new delivery jobs',
-            $onClick = OnUpdateCheckbox
+            $id = event.param.$id,
+            $text = table[$text='Apply to all fleets now'],
+            $mouseOverText = 'Applies this setting to all existing WarehouseFleets.',
+            $onClick = OnSyncButtonPressed
           ]"
         />
+      </actions>
+    </cue>
 
+    <cue name="AddCenteredTextRow" instantiate="true">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
         <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Dock idle M-sized ships']" />
-        <signal_cue_instantly
-          cue="md.Simple_Menu_API.Make_CheckBox"
-          param="table[
-            $id = 'waitInDockM',
-            $checked = global.$WarehouseFleets.$waitInDockM,
-            $col = 2,
-            $width = 'Helper.standardButtonHeight',
-            $height = 'Helper.standardButtonHeight',
-            $default = false,
-            $mouseOverText = 'M-sized ships should dock at their home warehouse while waiting for new delivery jobs',
-            $onClick = OnUpdateCheckbox
-          ]"
-        />
+        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[
+          $col = 1,
+          $colSpan = 2,
+          $halign = 'center',
+          $text = event.param.$text,
+        ]" />
+      </actions>
+    </cue>
 
-        <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
-        <signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Dock idle L-sized ships']" />
-        <signal_cue_instantly
-          cue="md.Simple_Menu_API.Make_CheckBox"
-          param="table[
-            $id = 'waitInDockL',
-            $checked = global.$WarehouseFleets.$waitInDockL,
-            $col = 2,
-            $width = 'Helper.standardButtonHeight',
-            $height = 'Helper.standardButtonHeight',
-            $default = false,
-            $mouseOverText = 'L-sized ships should dock at their home warehouse while waiting for new delivery jobs',
-            $onClick = OnUpdateCheckbox
-          ]"
-        />
-
+    <cue name="OnSyncButtonPressed" instantiate="true">
+      <conditions>
+        <event_cue_signalled />
+      </conditions>
+      <actions>
+        <find_ship_by_true_owner space="player.galaxy" faction="faction.player" multiple="true" name="$ships" />
+        <do_for_each in="$ships" name="$ship">
+          <do_if value="$ship.defaultorder != null and $ship.defaultorder.id == 'WarehouseFleet'">
+            <edit_order_param order="$ship.defaultorder" param="event.param.$id" value="global.$WarehouseFleets.{'$' + event.param.$id}" />
+          </do_if>
+        </do_for_each>
       </actions>
     </cue>
 
@@ -138,6 +230,7 @@
         <set_value name="global.$WarehouseFleets.{'$' + event.param.$id}" exact="event.param.$checked" />
       </actions>
     </cue>
+
     <cue name="OnUpdateDropdown" instantiate="true">
       <conditions>
         <event_cue_signalled />
@@ -146,7 +239,8 @@
         <set_value name="global.$WarehouseFleets.{'$' + event.param.$id}" exact="event.param.$option.$value" />
       </actions>
     </cue>
-    <cue name="OnUpdateValue" instantiate="true">
+
+    <cue name="OnUpdateSlider" instantiate="true">
       <conditions>
         <event_cue_signalled />
       </conditions>

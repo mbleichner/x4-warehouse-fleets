@@ -4,17 +4,8 @@
     <do_if value="$order.id == 'WarehouseFleet'">
       <set_value name="$added" />
       <run_script name="$scriptname">
+        <!-- only pass required params - the rest is inherited directly inside the aiscript -->
         <param name="sourceStation" value="$order.$sourceStation" />
-        <param name="targets" value="$order.$targets" />
-        <param name="targetsM" value="$order.$targetsM" />
-        <param name="targetsL" value="$order.$targetsL" />
-        <param name="supplyTargets" value="$order.$supplyTargets" />
-        <param name="prioDistribution" value="$order.$prioDistribution" />
-        <param name="prioTrade" value="$order.$prioTrade" />
-        <param name="prioSupply" value="$order.$prioSupply" />
-        <param name="prioBuild" value="$order.$prioBuild" />
-        <param name="minCargoUsage" value="$order.$minCargoUsage" />
-        <param name="tradeGatePenalty" value="$order.$tradeGatePenalty" />
       </run_script>
     </do_if>
   </add>
