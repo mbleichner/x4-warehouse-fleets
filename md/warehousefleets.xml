@@ -724,7 +724,7 @@
                 $backpressure = $backpressure,
                 $provider = $provider,
                 $receiver = $receiver,
-                $providerID = $receiver.idcode,
+                $providerID = $provider.idcode,
                 $receiverID = $receiver.idcode,
                 $providerOffer = $providerOffer, 
                 $receiverOffer = $receiverOffer,
