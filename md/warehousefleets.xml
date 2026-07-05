@@ -159,7 +159,10 @@
                     <check_value value="not $ship.exists" />
                   </conditions>
                   <actions>
-                    <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'Ship ' + $ship.idcode + ' destroyed, cancelling cues'" output="false" append="true" />
+                    <!-- @$ship.idcode: the ship component is already invalid here (that's the cue
+                         condition), so the property lookup must be guarded. Without the @ prefix
+                         this raises a Property-lookup-failed error every time a tracked ship dies. -->
+                    <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'Ship ' + @$ship.idcode + ' destroyed, cancelling cues'" output="false" append="true" />
                     <cancel_cue cue="ShipSpecificCues" />
                   </actions>
                 </cue>
@@ -187,7 +190,11 @@
 
                 <cue name="ReorderTargetsOnSave" instantiate="true">
                   <conditions>
-                    <event_object_order_ready object="$ship" />
+                    <!-- check="false" tells the engine not to raise an error if $ship is gone by
+                         the time the event is evaluated (e.g. ship destroyed). Without it, this
+                         cue throws "Component 0x0 does not exist any more" on ship death. -->
+                    <event_object_order_ready object="$ship" check="false" />
+                    <check_value value="@$ship.exists" />
                     <check_value value="@event.param.id == 'WarehouseFleet'" />
                   </conditions>
                   <actions>
