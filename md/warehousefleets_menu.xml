@@ -54,6 +54,11 @@
             'Drop: wares are dropped',
         ]" />
 
+        <signal_cue_instantly cue="AddSliderRow" param="table[
+          $id = 'miningFallbackIdleSeconds', $min = 0, $max = 600, $suffix = 's', $default = 60, $text = 'Mining fallback idle time (s)',
+          $mouseOverText = 'How long a mining-capable ship with the Mine When Idle fleet option must stay without any trade job before the scheduler dispatches a one-shot mining trip for the home warehouse'
+        ]" />
+
         <signal_cue_instantly cue="AddEmptyRow" />
         <signal_cue_instantly cue="AddEmptyRow" />
         <signal_cue_instantly cue="AddCenteredTextRow" param="table[$text='Default Fleet Settings (applied when creating new WarehouseFleets)']" />

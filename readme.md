@@ -39,6 +39,8 @@ To make this work, every warehouse gets assigned a "WarehouseFleet", composed of
 | Prio: Build | Set to high values to generally favor filling build storages over other tasks. |
 | Min. Cargo Usage (%) | Avoids scheduling inefficient trips. No ship will be scheduled that uses less than the specified cargo space. Setting this value too low can cause performance degradation. Setting the value too high might prevent/delay balancing of low volume wares. Ships supplying build storages may ignore this setting to avoid build jobs getting stuck with only a few materials left. |
 | Trades: Gate Penalty (%) | Reduces the attractivity of trades in other sectors to keep travel distances short. |
+| Mine When Idle | Only relevant for mining ships (solid or liquid cargo). When enabled and the scheduler cannot find any trade for the ship, it dispatches a one-shot mining trip to fill the home warehouse with its most under-stocked mineable ware (ore/silicon/ice for solid, hydrogen/methane/helium for liquid). The warehouse must have a buy offer and free storage allocation for the ware. Off by default. |
+| Mining: Max Gate Distance | How many jump gates away from the home warehouse's sector the idle-mining trip may search for resources. 0 = home sector only. |
 
 ## Global Settings
 
@@ -49,6 +51,15 @@ The global settings can be found in the "Extension Options" via the menu.
 | Player Account Threshold | Configures the minimum amount of money that should be left to the player, since buying missing wares from NPC traders can quickly drain your account. |
 | Auto-transfer money | Regularly transfer money from station accounts to the player, if at least 10% above the operating budget of the station |
 | Cargo emptying routine | Sometimes trades can fail, leaving ships with remaining cargo - this can be resolved in different ways. Check the ingame tooltip for available options. |
+| Mining fallback idle time | How long a mining-capable ship with "Mine When Idle" must stay without any trade job before a mining trip is dispatched. Prevents mining from firing during a brief gap between trades. |
+
+## Idle Mining Fallback
+
+Mining ships used as warehouse freighters (they are the only ships that can transport solid/liquid wares like ore or hydrogen) tend to idle a lot when the network is saturated. With the per-fleet "Mine When Idle" option enabled, such a ship that has had no trade job for a while will fly out, mine the home warehouse's most under-stocked mineable ware, and deliver it back:
+
+- The delivery first tries the fleet's Supply Targets, then the home warehouse, through normal trade orders. Only if neither can take the cargo does the configured cargo emptying routine kick in.
+- Concurrent mining trips reserve warehouse storage against each other, so ten miners will not all fetch the same ware for the same half-empty tank.
+- The mining trip is a single one-shot order (no mine/sell loop); afterwards the ship returns to normal WarehouseFleet behaviour.
 
 ## Warehouses, Trade Wares and Restrictions
 
