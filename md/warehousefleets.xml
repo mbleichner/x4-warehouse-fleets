@@ -802,7 +802,7 @@
             <return value="table[
               $provider = $referenceTransport.$provider,
               $receiver = $referenceTransport.$receiver,
-              $providerID = $referenceTransport.$receiver.idcode,
+              $providerID = $referenceTransport.$provider.idcode,
               $receiverID = $referenceTransport.$receiver.idcode,
               $wares = $transportWares,
               $cargoUsage = $cargoUsage,
