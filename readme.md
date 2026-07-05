@@ -50,6 +50,17 @@ The global settings can be found in the "Extension Options" via the menu.
 | Auto-transfer money | Regularly transfer money from station accounts to the player, if at least 10% above the operating budget of the station |
 | Cargo emptying routine | Sometimes trades can fail, leaving ships with remaining cargo - this can be resolved in different ways. Check the ingame tooltip for available options. |
 
+## Assigning Fleets to Their Warehouse Station (optional)
+
+Right-clicking a player-owned station with trade/mining ships selected now offers **"Warehouse Fleet under commander"**. This:
+
+- sets the selected ships to the WarehouseFleet behaviour with that station as Home Warehouse (ships that already run WarehouseFleet keep their configuration, only the Home Warehouse is updated),
+- assigns them under the station via a new "WarehouseFleet" assignment, so they are grouped under the station in the map/property menus instead of being scattered through "Unassigned ships".
+
+The assignment is purely a grouping anchor: the ships keep their WarehouseFleet default behaviour and never receive commander orders.
+
+Note on editing settings of assigned ships: the vanilla map UI greys out default-order parameters for any commander-assigned ship. With [kuertee's UI Extensions and HUD](https://www.nexusmods.com/x4foundations/mods/552) installed, this mod re-enables editing of WarehouseFleet parameters for ships using the WarehouseFleet assignment. Without it, everything still works, but to change a fleet setting you have to remove the ship's assignment first (or use the global "Apply to all fleets now" buttons in the Extension Options).
+
 ## Warehouses, Trade Wares and Restrictions
 
 The mod uses the normal trade mechanics of the game. So the ships will only be able to transport wares if there are corresponding trade offers set up and their restriction settings are set up appropriately.

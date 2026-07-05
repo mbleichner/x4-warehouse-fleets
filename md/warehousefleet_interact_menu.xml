@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mdscript name="WarehouseFleetInteractMenu" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+  <cues>
+    <cue name="Root">
+      <cues>
+        <cue name="Add_Interact_Actions" instantiate="true">
+          <conditions>
+            <event_cue_signalled cue="md.Interact_Menu_API.Get_Actions"/>
+          </conditions>
+          <actions>
+            <set_value name="$station" exact="@event.param.$object"/>
+            <set_value name="$ships" exact="@event.param.$selectedplayerships"/>
+            <set_value name="$eligiblecount" exact="0"/>
+
+            <do_if value="@$station.isclass.station and $station.trueowner == faction.player and not @$station.isclass.buildstorage and @$ships.count">
+              <do_for_each name="$ship" in="$ships">
+                <set_value name="$order" exact="if @$ship.defaultorder.id == 'Assist' then $ship.defaultorder.$baseorder else $ship.defaultorder"/>
+                <set_value name="$eligible" exact="@$ship.exists and $ship.trueowner == faction.player and @$ship.assignedpilot.exists and (@$order.id == 'WarehouseFleet' or $ship.primarypurpose == purpose.trade or $ship.primarypurpose == purpose.mine)"/>
+                <do_if value="$eligible">
+                  <set_value name="$eligiblecount" exact="$eligiblecount + 1"/>
+                </do_if>
+              </do_for_each>
+
+              <do_if value="$eligiblecount gt 0">
+                <signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param="table[
+                  $id        = 'warehousefleet_groupwith_commander',
+                  $section   = 'selected_orders',
+                  $text      = 'Warehouse Fleet under commander',
+                  $icon      = 'order_warehousefleetgroupwithcommander',
+                  $text2     = $eligiblecount + ' ship(s)',
+                  $mouseover = 'Set selected trade/mining ships to WarehouseFleet, use this station as their Home Warehouse, and group them under it.',
+                  $callback  = GroupWithCommander,
+                ]"/>
+              </do_if>
+            </do_if>
+            <cancel_cue cue="this"/>
+          </actions>
+        </cue>
+
+        <cue name="GroupWithCommander">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <actions>
+            <set_value name="$station" exact="@event.param.$object"/>
+            <set_value name="$ships" exact="@event.param.$selectedplayerships"/>
+            <set_value name="$assignedcount" exact="0"/>
+
+            <do_if value="not @$station.isclass.station or $station.trueowner != faction.player or @$station.isclass.buildstorage">
+              <show_notification text="'[WarehouseFleet] Target station is no longer valid.'" timeout="5s"/>
+              <reset_cue cue="this"/>
+            </do_if>
+            <do_else>
+              <do_for_each name="$ship" in="@$ships">
+                <set_value name="$order" exact="if @$ship.defaultorder.id == 'Assist' then $ship.defaultorder.$baseorder else $ship.defaultorder"/>
+                <set_value name="$eligible" exact="@$ship.exists and $ship.trueowner == faction.player and @$ship.assignedpilot.exists and (@$order.id == 'WarehouseFleet' or $ship.primarypurpose == purpose.trade or $ship.primarypurpose == purpose.mine)"/>
+                <do_if value="$eligible">
+                  <do_if value="not @$order.exists or $order.id != 'WarehouseFleet'">
+                    <create_order id="'WarehouseFleet'" object="$ship" default="true">
+                      <param name="sourceStation" value="$station"/>
+                    </create_order>
+                  </do_if>
+
+                  <create_order id="'WarehouseFleetGroupWithCommander'" object="$ship" immediate="true">
+                    <param name="commander" value="$station"/>
+                    <param name="assignment" value="assignment.warehousefleet"/>
+                    <param name="subordinategroup" value="0"/>
+                    <param name="setgroupassignment" value="false"/>
+                    <param name="usecommanderassource" value="true"/>
+                  </create_order>
+                  <set_value name="$assignedcount" exact="$assignedcount + 1"/>
+                </do_if>
+              </do_for_each>
+
+              <do_if value="$assignedcount gt 0">
+                <show_notification text="'[WarehouseFleet] Assigned ' + $assignedcount + ' ship(s) to ' + $station.knownname + '.'" timeout="5s"/>
+              </do_if>
+              <do_else>
+                <show_notification text="'[WarehouseFleet] No selected trade/mining ships to assign.'" timeout="5s"/>
+              </do_else>
+
+              <reset_cue cue="this"/>
+            </do_else>
+          </actions>
+        </cue>
+      </cues>
+    </cue>
+  </cues>
+</mdscript>
