@@ -831,7 +831,7 @@
             <set_value name="$money" exact="$amount * $ware.averageprice" />
             <remove_cargo object="$ship" ware="$ware" exact="$amount" />
             <transfer_money from="faction.ownerless" to="$recipient" amount="$money" />
-            <set_value name="$recoveryText" exact="'Refunding '+$amount+' '+$ware+'at the average price of '+$ware.averageprice/100.0+'Cr'" />
+            <set_value name="$recoveryText" exact="'Refunding '+$amount+' '+$ware+' at the average price of '+$ware.averageprice/100.0+'Cr'" />
             <write_to_logbook category="upkeep" entity="$warehouse" object="$ship" interaction="showonmap" title="'WarehouseFleet: Cargo Empty Routine ('+$warehouse.idcode+')'" money="$money" text="$recoveryText" />
           </do_all>
         </do_if>
