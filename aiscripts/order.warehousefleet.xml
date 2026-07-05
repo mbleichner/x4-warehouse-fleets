@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/aiscripts.xsd" version="43">
+<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/aiscripts.xsd" version="44">
 
   <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
     <params>
@@ -61,6 +61,10 @@
       </param>
       <param name="waitInDockL" type="bool" default="global.$WarehouseFleets.$waitInDockL" text="Dock idle L-sized ships">
         <patch sinceversion="43" value="global.$WarehouseFleets.$waitInDockL" />
+      </param>
+      <param name="debugchance" type="bool" default="0" advanced="true" text="Debug">
+        <input_param name="truevalue" value="100" />
+        <patch sinceversion="44" value="0" />
       </param>
     </params>
 

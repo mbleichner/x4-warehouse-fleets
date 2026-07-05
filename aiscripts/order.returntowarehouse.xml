@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="ReturnToWarehouse" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/aiscripts.xsd" version="6">
+<aiscript name="ReturnToWarehouse" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/aiscripts.xsd" version="7">
 
   <order id="ReturnToWarehouse" name="Return to Warehouse" description="Return to Warehouse" category="internal">
     <params>
       <param name="destination" default="null" advanced="true" type="internal" text="Home Station" />
+      <param name="debugchance" default="0" type="internal" text="Debug chance">
+        <patch sinceversion="7" value="0" />
+      </param>
     </params>
     <requires>
       <match shiptype="shiptype.lasertower" negate="true" />
@@ -33,6 +36,7 @@
         <run_script name="'move.generic'">
           <param name="destination" value="$destination" />
           <param name="endintargetzone" value="true" />
+          <param name="debugchance" value="$debugchance" />
         </run_script>
       </do_if>
       <label name="finish" />
