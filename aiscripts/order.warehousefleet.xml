@@ -62,8 +62,7 @@
       <param name="waitInDockL" type="bool" default="global.$WarehouseFleets.$waitInDockL" text="Dock idle L-sized ships">
         <patch sinceversion="43" value="global.$WarehouseFleets.$waitInDockL" />
       </param>
-      <param name="debugchance" type="bool" default="0" advanced="true" text="Debug">
-        <input_param name="truevalue" value="100" />
+      <param name="debugchance" default="0" type="internal" text="Debug">
         <patch sinceversion="44" value="0" />
       </param>
     </params>
