@@ -159,10 +159,7 @@
                     <check_value value="not $ship.exists" />
                   </conditions>
                   <actions>
-                    <!-- @$ship.idcode: the ship component is already invalid here (that's the cue
-                         condition), so the property lookup must be guarded. Without the @ prefix
-                         this raises a Property-lookup-failed error every time a tracked ship dies. -->
-                    <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'Ship ' + @$ship.idcode + ' destroyed, cancelling cues'" output="false" append="true" />
+                    <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'Ship was destroyed, cancelling cues'" output="false" append="true" />
                     <cancel_cue cue="ShipSpecificCues" />
                   </actions>
                 </cue>
