@@ -159,7 +159,7 @@
                     <check_value value="not $ship.exists" />
                   </conditions>
                   <actions>
-                    <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'Ship ' + $ship.idcode + ' destroyed, cancelling cues'" output="false" append="true" />
+                    <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'Ship was destroyed, cancelling cues'" output="false" append="true" />
                     <cancel_cue cue="ShipSpecificCues" />
                   </actions>
                 </cue>
@@ -187,7 +187,11 @@
 
                 <cue name="ReorderTargetsOnSave" instantiate="true">
                   <conditions>
-                    <event_object_order_ready object="$ship" />
+                    <!-- check="false" tells the engine not to raise an error if $ship is gone by
+                         the time the event is evaluated (e.g. ship destroyed). Without it, this
+                         cue throws "Component 0x0 does not exist any more" on ship death. -->
+                    <event_object_order_ready object="$ship" check="false" />
+                    <check_value value="@$ship.exists" />
                     <check_value value="@event.param.id == 'WarehouseFleet'" />
                   </conditions>
                   <actions>
@@ -724,7 +728,7 @@
                 $backpressure = $backpressure,
                 $provider = $provider,
                 $receiver = $receiver,
-                $providerID = $receiver.idcode,
+                $providerID = $provider.idcode,
                 $receiverID = $receiver.idcode,
                 $providerOffer = $providerOffer, 
                 $receiverOffer = $receiverOffer,
@@ -802,7 +806,7 @@
             <return value="table[
               $provider = $referenceTransport.$provider,
               $receiver = $referenceTransport.$receiver,
-              $providerID = $referenceTransport.$receiver.idcode,
+              $providerID = $referenceTransport.$provider.idcode,
               $receiverID = $referenceTransport.$receiver.idcode,
               $wares = $transportWares,
               $cargoUsage = $cargoUsage,
@@ -831,7 +835,7 @@
             <set_value name="$money" exact="$amount * $ware.averageprice" />
             <remove_cargo object="$ship" ware="$ware" exact="$amount" />
             <transfer_money from="faction.ownerless" to="$recipient" amount="$money" />
-            <set_value name="$recoveryText" exact="'Refunding '+$amount+' '+$ware+'at the average price of '+$ware.averageprice/100.0+'Cr'" />
+            <set_value name="$recoveryText" exact="'Refunding '+$amount+' '+$ware+' at the average price of '+$ware.averageprice/100.0+'Cr'" />
             <write_to_logbook category="upkeep" entity="$warehouse" object="$ship" interaction="showonmap" title="'WarehouseFleet: Cargo Empty Routine ('+$warehouse.idcode+')'" money="$money" text="$recoveryText" />
           </do_all>
         </do_if>
