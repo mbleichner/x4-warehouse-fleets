@@ -62,7 +62,9 @@
       <param name="waitInDockL" type="bool" default="global.$WarehouseFleets.$waitInDockL" text="Dock idle L-sized ships">
         <patch sinceversion="43" value="global.$WarehouseFleets.$waitInDockL" />
       </param>
-      <param name="debugchance" default="0" type="internal" text="Debug">
+
+      <param name="debugchance" default="0" type="internal" text="debugchance">
+        <!-- needed to avoid error messages when interrupts trigger during the run_script part -->
         <patch sinceversion="44" value="0" />
       </param>
     </params>

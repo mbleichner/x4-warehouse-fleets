@@ -4,7 +4,8 @@
   <order id="ReturnToWarehouse" name="Return to Warehouse" description="Return to Warehouse" category="internal">
     <params>
       <param name="destination" default="null" advanced="true" type="internal" text="Home Station" />
-      <param name="debugchance" default="0" type="internal" text="Debug chance">
+      <param name="debugchance" default="0" type="internal" text="debugchance">
+        <!-- needed to avoid error messages when interrupts trigger during the run_script part -->
         <patch sinceversion="7" value="0" />
       </param>
     </params>
