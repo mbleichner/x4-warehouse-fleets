@@ -40,13 +40,42 @@ local function isAssignedWarehouseFleetDefault(orderidx, order, instance)
     return ok and assignment == "warehousefleet"
 end
 
-local function changeParamActive(ftable, orderidx, order, paramidx, param, listidx, instance, paramactive)
-    if paramactive then
-        return nil
+local function ensureWarehouseFleetAssignmentOption(ftable)
+    if not ftable or type(ftable.rows) ~= "table" then
+        return
     end
 
+    for _, row in ipairs(ftable.rows) do
+        if type(row.rowdata) == "table" and row.rowdata[1] == "assignment" then
+            local cell = row[5]
+            local options = cell and cell.properties and cell.properties.options
+            if type(options) ~= "table" then
+                return
+            end
+
+            for _, option in ipairs(options) do
+                if option.id == "warehousefleet" then
+                    return
+                end
+            end
+
+            table.insert(options, {
+                id = "warehousefleet",
+                text = "WarehouseFleet",
+                icon = "",
+                displayremoveoption = false,
+            })
+            return
+        end
+    end
+end
+
+local function changeParamActive(ftable, orderidx, order, paramidx, param, listidx, instance, paramactive)
     if isAssignedWarehouseFleetDefault(orderidx, order, instance) then
-        return { paramactive = true }
+        ensureWarehouseFleetAssignmentOption(ftable)
+        if not paramactive then
+            return { paramactive = true }
+        end
     end
 
     return nil
@@ -86,6 +115,11 @@ local function init()
     if not mapMenu or type(mapMenu.registerCallback) ~= "function" then
         debug("MapMenu/UIX callback API is unavailable; UIX callback not registered.")
         return
+    end
+
+    local config = type(mapMenu.uix_getConfig) == "function" and mapMenu.uix_getConfig() or nil
+    if config and config.assignments then
+        config.assignments["warehousefleet"] = { name = "WarehouseFleet" }
     end
 
     mapMenu.registerCallback("displayOrderParam_change_paramactive", changeParamActive, CALLBACK_ID)
