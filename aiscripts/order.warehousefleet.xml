@@ -44,6 +44,13 @@
         <input_param name="max" value="10" />
         <patch sinceversion="42" value="7" />
       </param>
+      <!-- sinceversion 45 - jump ahead [START]. This is placed here for cohesion between similiar parameters -->
+      <param name="prioMining" default="global.$WarehouseFleets.$prioMining" type="number" text="Prio: Mining">
+        <input_param name="min" value="0" />
+        <input_param name="max" value="10" />
+        <patch sinceversion="45" value="global.$WarehouseFleets.$prioMining" />
+      </param>
+      <!-- sinceversion 45 - jump ahead [END]. -->
       <param name="minCargoUsage" default="global.$WarehouseFleets.$minCargoUsage" type="number" text="Min. Cargo Usage (%)">
         <input_param name="min" value="0" />
         <input_param name="max" value="90" />
@@ -68,10 +75,6 @@
         <patch sinceversion="44" value="0" />
       </param>
 
-      <!-- idle mining fallback (only relevant for ships with solid/liquid cargo, i.e. miners) -->
-      <param name="miningFallback" type="bool" default="false" text="Mine When Idle">
-        <patch sinceversion="45" value="false" />
-      </param>
       <param name="miningMaxGateDistance" default="3" type="number" text="Mining: Max Gate Distance">
         <input_param name="min" value="0" />
         <input_param name="max" value="10" />

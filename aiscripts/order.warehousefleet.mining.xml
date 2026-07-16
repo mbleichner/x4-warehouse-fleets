@@ -2,23 +2,28 @@
 <aiscript name="order.warehousefleet.mining" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="1">
 
   <!--
-    One-shot mining order issued by the WarehouseFleet idle-mining fallback.
+    One-shot mining order dispatched by the WarehouseFleet scheduler when a mining trip wins the
+    importance/rating competition (see prioMining and FindMiningCandidate in md/warehousefleets.xml).
 
     Why this exists: vanilla MiningRoutine is an infinite loop (mine -> sell -> mine -> ...).
     Even with maxsell=0 and a duration cap, the inner AutoMine sub-order keeps the ship cycling,
-    which conflicts with the WarehouseFleet delivery flow (supply-target first, then home
-    warehouse, then the configured cargo emptying routine).
+    which conflicts with the WarehouseFleet delivery flow (sell to the home warehouse, let the
+    next scheduling round decide where the ware is needed).
 
     What this does: find a resource area for the chosen ware near the anchor sector, reserve it,
     dispatch a single MiningCollect sub-order (the same leaf order vanilla mining uses), wait
     for it to end (cargo full or area depleted), release the reservation, and END. No selling,
     no looping. The ship then returns to its default behaviour (WarehouseFleet), whose scheduler
-    picks up the cargo on the next cycle and routes it through DeliverMinedCargoOrFallback.
+    picks up the cargo on the next cycle and sells it to the home warehouse.
+
+    Recall: the MD-side MiningOpWatcher cancels the MiningCollect sub-order when the trip stops
+    making progress; this script then resumes from its wait, releases the reservation and ends
+    normally with whatever cargo was gathered.
   -->
 
-  <order id="WarehouseFleetMine" name="WarehouseFleet Mining" description="One-shot mining for the WarehouseFleet idle-mining fallback." category="internal" allowinloop="false">
+  <order id="WarehouseFleetMine" name="WarehouseFleet Mining" description="One-shot mining trip for the WarehouseFleet behaviour." category="internal" allowinloop="false">
     <params>
-      <param name="ware" required="true" type="ware" text="Ware to mine" comment="The single ware to gather. Picked by PickMiningWare in the MD scheduler.">
+      <param name="ware" required="true" type="ware" text="Ware to mine" comment="The single ware to gather. Picked by FindMiningCandidate in the MD scheduler.">
         <input_param name="cancarry" value="this.ship"/>
         <input_param name="isminable" value="true"/>
       </param>
@@ -28,13 +33,9 @@
         <input_param name="max" value="10"/>
         <input_param name="step" value="1"/>
       </param>
-      <!-- $debugchance must exist in this script's scope: the vanilla interrupt handlers below
-           (e.g. interrupt.inspected) execute their actions in the interrupted script's variable
-           scope and read $debugchance unguarded. Without this param, every inspection event on a
-           ship running this order raises "Property lookup failed: $debugchance". -->
-      <param name="debugchance" type="bool" default="0" advanced="true" text="Debug">
-        <input_param name="truevalue" value="100"/>
-      </param>
+      <param name="cooldownKey" default="null" type="internal" text="Mining cooldown key"/>
+      <!-- needed to avoid error messages when interrupts trigger during the run_script part -->
+      <param name="debugchance" default="0" type="internal" text="Debug chance"/>
     </params>
     <requires primarypurpose="purpose.mine"/>
     <!-- condition="false" suppresses the map marker entirely. Without this, even an internal-
@@ -218,8 +219,13 @@
       <do_if value="not @$resourcearea.exists or not @$foundSector">
         <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
           text="'  WarehouseFleetMine: no resource area found for ' + $ware + ' within ' + $maxGateDistance + ' gate(s) of ' + $anchorSector.knownname + '; aborting'" append="true"/>
+        <!-- Fire MiningResourceNotFound event to make sure miningCooldown is applied -->
+        <signal_objects object="player.entity" param="'WarehouseFleets'" param2="'MiningResourceNotFound'" param3="$cooldownKey"/>
         <return/>
       </do_if>
+
+      <!-- Reserve the selected resource area while MiningCollect is running -->
+      <add_yield_reservation reserver="this.assignedcontrolled" resourcearea="$resourcearea"/>
 
       <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
         text="'[' + player.age + '] WarehouseFleetMine: dispatching MiningCollect for ' + $ware + ' in ' + $foundSector.knownname" append="true"/>
