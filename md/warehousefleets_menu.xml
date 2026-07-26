@@ -60,12 +60,10 @@
             table[$text='Independent fleets (Default)', $value=1],
             table[$text='Subordinates of warehouse', $value=2]
           ],
-          $text = 'Organize fleets in menu as ...',
-          $mouseOverText = 'Independent fleets: WarehouseFleet ships stay on the top level of the map/property menus.\n\n' +
-            'Subordinates of warehouse: fleets attach themselves to their home warehouse station and are listed under it. ' +
-            'They keep their WarehouseFleet behaviour and their settings stay editable; the station never gives them orders. ' +
-            'Changing the Home Warehouse of a fleet moves it to the new station automatically.\n\n' +
-            'Switching this setting immediately attaches/detaches all existing WarehouseFleet ships.',
+          $text = 'Organize fleets in menu as',
+          $mouseOverText = 'Independent fleets: WarehouseFleet ships will be displayed on the top level of the map/property menus.\n\n' +
+            'Subordinates of warehouse: fleets will be displayed as subordinates under their respective warehouses.\n\n' +
+            'Switching this setting immediately attaches/detaches all existing fleets.',
         ]" />
 
         <signal_cue_instantly cue="AddEmptyRow" />
@@ -252,7 +250,7 @@
       <actions>
         <set_value name="global.$WarehouseFleets.{'$' + event.param.$id}" exact="event.param.$option.$value" />
         <do_if value="event.param.$id == 'fleetOrganization'">
-          <signal_cue_instantly cue="md.WarehouseFleets.FleetOrganizationSweep" />
+          <signal_cue_instantly cue="md.WarehouseFleets.UpdateFleetOrganization" />
         </do_if>
       </actions>
     </cue>

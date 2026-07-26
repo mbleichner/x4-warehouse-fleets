@@ -86,9 +86,8 @@
       </patch>
     </cue>
 
-    <!-- Attaches/detaches all WarehouseFleet ships to/from their home warehouse according to the
-         "Organize fleets in menu as ..." setting. -->
-    <cue name="FleetOrganizationSweep" instantiate="true" namespace="this">
+    <!-- Attaches/detaches all WarehouseFleet ships to/from their home warehouse according to the "Organize fleets in menu as" setting. -->
+    <cue name="UpdateFleetOrganization" instantiate="true" namespace="this">
       <conditions>
         <event_cue_signalled />
       </conditions>
@@ -100,8 +99,7 @@
               <!-- Stale anchor - the ship no longer runs WarehouseFleet -->
               <remove_object_commander object="$ship" />
             </do_if>
-            <!-- Also skips Assist mimics - they stay under their fleet lead -->
-            <continue />
+            <continue /> <!-- Also skips Assist mimics - they stay under their fleet lead -->
           </do_if>
 
           <do_if value="global.$WarehouseFleets.$fleetOrganization == 2">
@@ -110,12 +108,10 @@
               <continue />
             </do_if>
             <do_if value="$ship.commander == $home and $ship.assignment == assignment.warehousefleet">
-              <!-- Already anchored correctly -->
-              <continue />
+              <continue /> <!-- Already anchored correctly -->
             </do_if>
             <do_if value="$ship.commander and $ship.assignment != assignment.warehousefleet">
-              <!-- Ship has a commander the player assigned deliberately - don't hijack it -->
-              <continue />
+              <continue /> <!-- Ship has a commander the player assigned deliberately - don't hijack it -->
             </do_if>
             <do_if value="not $ship.canuseassignment.{assignment.warehousefleet}.{$home}">
               <continue />
@@ -128,7 +124,7 @@
             <set_object_commander object="$ship" commander="$home" assignment="assignment.warehousefleet" />
           </do_if>
 
-          <do_else>
+          <do_else> <!-- global.$WarehouseFleets.$fleetOrganization == 1 -->
             <do_if value="$ship.assignment == assignment.warehousefleet">
               <remove_object_commander object="$ship" />
             </do_if>
@@ -243,12 +239,10 @@
                   </actions>
                 </cue>
 
-                <cue name="ReorderTargetsOnSave" instantiate="true">
+                <!-- Reorders target lists and updates assignment according to fleet organization setting -->
+                <cue name="OnSaveOrder" instantiate="true">
                   <conditions>
-                    <!-- check="false" tells the engine not to raise an error if $ship is gone by
-                         the time the event is evaluated (e.g. ship destroyed). Without it, this
-                         cue throws "Component 0x0 does not exist any more" on ship death. -->
-                    <event_object_order_ready object="$ship" check="false" />
+                    <event_object_order_ready object="$ship" check="false" /> <!-- check="false" tells the engine not to raise an error if $ship is gone by the time the event is evaluated (e.g. ship destroyed). Without it, this cue throws "Component 0x0 does not exist any more" on ship death. -->
                     <check_value value="@$ship.exists" />
                     <check_value value="@event.param.id == 'WarehouseFleet'" />
                   </conditions>
@@ -257,7 +251,7 @@
                     <sort_list list="$order.$targets" sortbyvalue="(if (loop.element.class == class.station) then 'AAA:' else '') + loop.element.knownname" />
                     <sort_list list="$order.$targetsM" sortbyvalue="(if (loop.element.class == class.station) then 'AAA:' else '') + loop.element.knownname" />
                     <sort_list list="$order.$targetsL" sortbyvalue="(if (loop.element.class == class.station) then 'AAA:' else '') + loop.element.knownname" />
-                    <signal_cue_instantly cue="FleetOrganizationSweep" comment="fleet settings changed - e.g. the home warehouse might have moved" />
+                    <signal_cue_instantly cue="UpdateFleetOrganization" comment="fleet settings changed - e.g. the home warehouse might have moved" />
                   </actions>
                 </cue>
               </cues>
