@@ -109,12 +109,12 @@
             <do_if value="not @$home.isoperational">
               <continue />
             </do_if>
-            <!-- Already anchored correctly -->
             <do_if value="$ship.commander == $home and $ship.assignment == assignment.warehousefleet">
+              <!-- Already anchored correctly -->
               <continue />
             </do_if>
-            <!-- Ship has a commander the player assigned deliberately - don't hijack it -->
             <do_if value="$ship.commander and $ship.assignment != assignment.warehousefleet">
+              <!-- Ship has a commander the player assigned deliberately - don't hijack it -->
               <continue />
             </do_if>
             <do_if value="not $ship.canuseassignment.{assignment.warehousefleet}.{$home}">
