@@ -87,23 +87,11 @@
     </cue>
 
     <!-- Attaches/detaches all WarehouseFleet ships to/from their home warehouse according to the
-         "Organize fleets in menu as ..." setting. Coalesces signal bursts into a single sweep. -->
-    <cue name="UpdateFleetOrganization" instantiate="true" namespace="this">
-      <conditions>
-        <event_cue_signalled />
-        <check_value value="not @global.$WarehouseFleets.$fleetOrgSweepQueued" />
-      </conditions>
-      <actions>
-        <set_value name="global.$WarehouseFleets.$fleetOrgSweepQueued" exact="true" />
-        <signal_cue cue="FleetOrganizationSweep" />
-      </actions>
-    </cue>
-
+         "Organize fleets in menu as ..." setting. -->
     <cue name="FleetOrganizationSweep" instantiate="true" namespace="this">
       <conditions>
         <event_cue_signalled />
       </conditions>
-      <delay exact="1s" />
       <actions>
         <find_ship_by_true_owner faction="faction.player" space="player.galaxy" name="$ships" multiple="true" />
         <do_for_each in="$ships" name="$ship">
@@ -146,7 +134,6 @@
             </do_if>
           </do_else>
         </do_for_each>
-        <remove_value name="global.$WarehouseFleets.$fleetOrgSweepQueued" />
       </actions>
     </cue>
 
@@ -270,7 +257,7 @@
                     <sort_list list="$order.$targets" sortbyvalue="(if (loop.element.class == class.station) then 'AAA:' else '') + loop.element.knownname" />
                     <sort_list list="$order.$targetsM" sortbyvalue="(if (loop.element.class == class.station) then 'AAA:' else '') + loop.element.knownname" />
                     <sort_list list="$order.$targetsL" sortbyvalue="(if (loop.element.class == class.station) then 'AAA:' else '') + loop.element.knownname" />
-                    <signal_cue_instantly cue="UpdateFleetOrganization" comment="fleet settings changed - e.g. the home warehouse might have moved" />
+                    <signal_cue_instantly cue="FleetOrganizationSweep" comment="fleet settings changed - e.g. the home warehouse might have moved" />
                   </actions>
                 </cue>
               </cues>

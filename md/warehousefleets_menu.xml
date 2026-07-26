@@ -252,7 +252,7 @@
       <actions>
         <set_value name="global.$WarehouseFleets.{'$' + event.param.$id}" exact="event.param.$option.$value" />
         <do_if value="event.param.$id == 'fleetOrganization'">
-          <signal_cue_instantly cue="md.WarehouseFleets.UpdateFleetOrganization" />
+          <signal_cue_instantly cue="md.WarehouseFleets.FleetOrganizationSweep" />
         </do_if>
       </actions>
     </cue>
