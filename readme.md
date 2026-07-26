@@ -16,6 +16,10 @@ It introduces the WarehouseFleet behaviour, which serves the following purposes:
 
 Just take the whole source folder and put it into your X4 extensions folder.
 
+Required mods:
+- [SirNukes Mod Support APIs](https://steamcommunity.com/sharedfiles/filedetails/?id=2042901274)
+- [kuertee's UI Extensions and HUD](https://www.nexusmods.com/x4foundations/mods/552) (note: requires Protected UI Mode to be disabled)
+
 ## Intended Use
 
 The mod allows to create a network of warehouses across the galaxy, which will ultimately behave like a single giant shared storage. Arbitrary refineries and factories can be built along this network and will feed from its resources and provide their own products back into the network.
@@ -49,6 +53,16 @@ The global settings can be found in the "Extension Options" via the menu.
 | Player Account Threshold | Configures the minimum amount of money that should be left to the player, since buying missing wares from NPC traders can quickly drain your account. |
 | Auto-transfer money | Regularly transfer money from station accounts to the player, if at least 10% above the operating budget of the station |
 | Cargo emptying routine | Sometimes trades can fail, leaving ships with remaining cargo - this can be resolved in different ways. Check the ingame tooltip for available options. |
+| Organize fleets in menu as ... | "Independent fleets" (default): WarehouseFleet ships stay on the top level of the map/property menus, as before. "Subordinates of warehouse": every WarehouseFleet ship attaches itself under its home warehouse station, so each station's fleet is listed under that station instead of being scattered through the ship list. |
+
+## Organizing Fleets Under Their Warehouse
+
+With "Organize fleets in menu as ..." set to "Subordinates of warehouse", fleets manage their station assignment fully automatically - no extra setup needed:
+
+- A ship attaches itself under its Home Warehouse as soon as the WarehouseFleet behaviour is set up, and moves to the new station whenever its Home Warehouse setting changes.
+- The assignment (a new "WarehouseFleet" assignment type) is purely a grouping anchor: the ships keep their WarehouseFleet behaviour, their settings stay fully editable, and the station never gives them orders.
+- Switching the setting back to "Independent fleets" detaches all fleets again. Assignments made by hand (e.g. ships assigned to a station for trade or defence) are never touched in either direction.
+- Fleets built around a commander ship with mimicking subordinates keep their internal structure: only the fleet lead attaches to the station.
 
 ## Warehouses, Trade Wares and Restrictions
 

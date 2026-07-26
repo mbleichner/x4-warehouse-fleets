@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/diff.xsd">
+  <add sel="/assignments">
+    <assignment id="warehousefleet" name="WarehouseFleet" description="Grouped under a commander, but controlled by WarehouseFleet behaviour.">
+      <station />
+    </assignment>
+  </add>
+</diff>
