@@ -54,6 +54,18 @@
             'Drop: wares are dropped',
         ]" />
 
+        <signal_cue_instantly cue="AddDropdownRow" param="table[
+          $id = 'fleetOrganization',
+          $options = [
+            table[$text='Independent fleets (Default)', $value=1],
+            table[$text='Subordinates of warehouse', $value=2]
+          ],
+          $text = 'Organize fleets in menu as',
+          $mouseOverText = 'Independent fleets: WarehouseFleet ships will be displayed on the top level of the map/property menus.\n\n' +
+            'Subordinates of warehouse: fleets will be displayed as subordinates under their respective warehouses.\n\n' +
+            'Switching this setting immediately attaches/detaches all existing fleets.',
+        ]" />
+
         <signal_cue_instantly cue="AddEmptyRow" />
         <signal_cue_instantly cue="AddEmptyRow" />
         <signal_cue_instantly cue="AddCenteredTextRow" param="table[$text='Default Fleet Settings (applied when creating new WarehouseFleets)']" />
@@ -241,6 +253,9 @@
       </conditions>
       <actions>
         <set_value name="global.$WarehouseFleets.{'$' + event.param.$id}" exact="event.param.$option.$value" />
+        <do_if value="event.param.$id == 'fleetOrganization'">
+          <signal_cue_instantly cue="md.WarehouseFleets.UpdateFleetOrganization" />
+        </do_if>
       </actions>
     </cue>
 

@@ -16,6 +16,10 @@ It introduces the WarehouseFleet behaviour, which serves the following purposes:
 
 Just take the whole source folder and put it into your X4 extensions folder.
 
+Required mods:
+- [SirNukes Mod Support APIs](https://www.nexusmods.com/x4foundations/mods/503)
+- [kuertee's UI Extensions and HUD](https://www.nexusmods.com/x4foundations/mods/552) (note: requires Protected UI Mode to be disabled)
+
 ## Intended Use
 
 The mod allows to create a network of warehouses across the galaxy, which will ultimately behave like a single giant shared storage. Arbitrary refineries and factories can be built along this network and will feed from its resources and provide their own products back into the network.
@@ -51,6 +55,7 @@ The global settings can be found in the "Extension Options" via the menu.
 | Player Account Threshold | Configures the minimum amount of money that should be left to the player, since buying missing wares from NPC traders can quickly drain your account. |
 | Auto-transfer money | Regularly transfer money from station accounts to the player, if at least 10% above the operating budget of the station |
 | Cargo emptying routine | Sometimes trades can fail, leaving ships with remaining cargo - this can be resolved in different ways. Check the ingame tooltip for available options. |
+| Organize fleets in menu as | "Independent fleets" (default): WarehouseFleet ships will be displayed on the top level of the map/property menus.<br/>"Subordinates of warehouse": fleets will be attached as subordinates under their home warehouses. |
 
 ## Mining
 
@@ -91,6 +96,7 @@ If a warehouse has unrestricted sell offers, NPC traders can also buy directly f
 - Ships will always begin and end their tasks at the home warehouse. A ship will fly back to the warehouse, even if it has nothing to carry and could in theory fly directly to another station. This is intentional, so that the routes are easier to control and protect. If shortcutting was allowed, the pathing could become unpredictable and ships might fly through hostile regions.
 - S class ships will only operate in the local sector. They are generally very inefficient when it comes to longer flights and to cut down on settings, this behavior is hardcoded.
 - Ships will only consider a trade if it is profitable. This means they will only sell a ware if your sell offer is cheaper than the buy offer of an NPC station and they will only buy a ware if your buy offer is higher than the sell offer of an NPC station. Usually, you want to set automatic pricing, so your ships will only buy/sell wares if the offer is profitable considering the current market price.
+- When using the setting "organize fleets in menu as subordinates of warehouse", the fleets get attached to their warehouse, but this is purely a grouping anchor: the ships behave exactly like independent fleets, their settings stay fully editable, and the station never gives them orders.
 
 ## Recommendations
 
@@ -109,5 +115,4 @@ If a warehouse has unrestricted sell offers, NPC traders can also buy directly f
 
 ## Known Problems
 
-- When defining the targets of a newly created fleet, the game UI sometimes crashes and resets itself. I have no idea why this happens. Seems to be a bug in the game. It is recommended to save before editing this parameter.
 - Setting up the trades of the warehouses is a bit tedious at the moment, because it has to be done one by one in each warehouse. I don't know if there is a good solution to this problem.
