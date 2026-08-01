@@ -95,6 +95,10 @@
         <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'prioBuild']" />
         <signal_cue_instantly cue="AddEmptyRow" />
 
+        <signal_cue_instantly cue="AddSliderRow" param="table[$id = 'prioMining', $min = 0, $max = 10, $suffix = '', $default = 4, $text = 'Prio: Mining', $mouseOverText = 'Priority of mining trips for mining-capable ships. Mining attractivity grows as the home warehouse runs low on a mineable ware. 0 disables mining completely.']" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'prioMining']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
         <signal_cue_instantly cue="AddCheckboxRow" param="table[$id = 'waitInDockS', $default = true, $text = 'Dock idle S-sized ships', $mouseOverText = 'S-sized ships should dock at their home warehouse while waiting for new delivery jobs']" />
         <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'waitInDockS']" />
         <signal_cue_instantly cue="AddEmptyRow" />

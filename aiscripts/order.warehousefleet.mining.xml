@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aiscript name="order.warehousefleet.mining" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="1">
+
+  <!--
+    One-shot mining order dispatched by the WarehouseFleet scheduler when a mining trip wins the
+    importance/rating competition (see prioMining and FindMiningCandidate in md/warehousefleets.xml).
+
+    Why this exists: vanilla MiningRoutine is an infinite loop (mine -> sell -> mine -> ...).
+    Even with maxsell=0 and a duration cap, the inner AutoMine sub-order keeps the ship cycling,
+    which conflicts with the WarehouseFleet delivery flow (sell to the home warehouse, let the
+    next scheduling round decide where the ware is needed).
+
+    What this does: find a resource area for the chosen ware near the anchor sector, reserve it,
+    dispatch a single MiningCollect sub-order (the same leaf order vanilla mining uses), wait
+    for it to end (cargo full or area depleted), release the reservation, and END. No selling,
+    no looping. The ship then returns to its default behaviour (WarehouseFleet), whose scheduler
+    picks up the cargo on the next cycle and sells it to the home warehouse.
+
+    Recall: the MD-side MiningOpWatcher cancels the MiningCollect sub-order when the trip stops
+    making progress; this script then resumes from its wait, releases the reservation and ends
+    normally with whatever cargo was gathered.
+  -->
+
+  <order id="WarehouseFleetMine" name="WarehouseFleet Mining" description="One-shot mining trip for the WarehouseFleet behaviour." category="internal" allowinloop="false">
+    <params>
+      <param name="ware" required="true" type="ware" text="Ware to mine" comment="The single ware to gather. Picked by FindMiningCandidate in the MD scheduler.">
+        <input_param name="cancarry" value="this.ship"/>
+        <input_param name="isminable" value="true"/>
+      </param>
+      <param name="anchorSector" required="true" type="sector" text="Anchor sector" comment="Sector to search for resource areas in. Normally the home warehouse's sector."/>
+      <param name="maxGateDistance" default="0" type="number" text="Max gate distance" comment="How many gate hops away from anchorSector we may search if the anchor sector has no resource area for the chosen ware. 0 = anchor sector only.">
+        <input_param name="min" value="0"/>
+        <input_param name="max" value="10"/>
+        <input_param name="step" value="1"/>
+      </param>
+      <param name="cooldownKey" default="null" type="internal" text="Mining cooldown key"/>
+      <!-- needed to avoid error messages when interrupts trigger during the run_script part -->
+      <param name="debugchance" default="0" type="internal" text="Debug chance"/>
+    </params>
+    <requires primarypurpose="purpose.mine"/>
+    <!-- condition="false" suppresses the map marker entirely. Without this, even an internal-
+         category order can leave a placeholder "?" icon hovering on the sector since X4 still
+         resolves the <location object="..."> for display. Same idiom as vanilla SalvageDeliver. -->
+    <location condition="false" object="$anchorSector"/>
+  </order>
+
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler"/>
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="FoundAbandonedHandler"/>
+    <handler ref="FoundLockboxHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="TideHandler"/>
+  </interrupts>
+
+  <init>
+    <set_value name="$resourcearea" exact="null"/>
+    <set_command command="command.mining" param="$anchorSector"/>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+      <label name="start"/>
+
+      <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+        text="'[' + player.age + '] WarehouseFleetMine: start - ware=' + $ware + ' anchor=' + @$anchorSector.knownname + ' maxGateDistance=' + $maxGateDistance + ' shipCargoFor=' + this.ship.cargo.{$ware}.max" append="true"/>
+
+      <!-- Bail out cleanly if our inputs are gone. -->
+      <do_if value="not @$anchorSector.exists or not @$ware">
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+          text="'  WarehouseFleetMine: anchor sector or ware invalid; aborting'" append="true"/>
+        <return/>
+      </do_if>
+
+      <!-- The ship must actually be able to carry this ware. -->
+      <do_if value="not this.ship.cargo.{$ware}.max">
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+          text="'  WarehouseFleetMine: ship cannot carry ' + $ware + '; aborting'" append="true"/>
+        <return/>
+      </do_if>
+
+      <!-- Ship already effectively loaded with this ware? Don't fly to a resource area just to
+           top off the last sliver of cargo and immediately bail. Threshold: less than 2% free.
+           Integer-safe form: free*50 < max  <=>  free < max*0.02. -->
+      <do_if value="(this.ship.cargo.{$ware}.free * 50) lt this.ship.cargo.{$ware}.max">
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+          text="'  WarehouseFleetMine: ship effectively full of ' + $ware + ' (' + this.ship.cargo.{$ware}.count + '/' + this.ship.cargo.{$ware}.max + ', free=' + this.ship.cargo.{$ware}.free + ' &lt; 2%); skip mining, let scheduler deliver'" append="true"/>
+        <return/>
+      </do_if>
+
+      <!-- Tunables for the sector-and-patch picker.
+           - DistanceFactor: in score = yieldrating / (1 + gateDist * factor). Vanilla uses 0.2;
+             0.4 makes the ship prefer staying close unless a neighbor is substantially richer.
+           - FloorRatio Min/Max: random fraction of the chosen sector's headline yieldrating used
+             as the minrating floor for find_resource. Spreads ships across patches instead of
+             all converging on the single best rock.
+           - SectorRetries: how many top-scored sectors to attempt before giving up and doing the
+             unlucky-fallback (no-minrating call). Includes the best one. -->
+      <set_value name="$miningDistanceFactor" exact="0.4f"/>
+      <set_value name="$miningFloorRatioMin" exact="0.3f"/>
+      <set_value name="$miningFloorRatioMax" exact="0.95f"/>
+      <set_value name="$miningFloorRelaxDiv" exact="0.75f"/>
+      <set_value name="$miningSectorRetries" exact="4"/>
+
+      <!-- Build {sector -> gate distance} table, respecting sector activity/travel blacklists. -->
+      <include_interrupt_actions ref="GetBlacklistgroup"/>
+      <run_script name="'lib.find.sectors.inrange'" result="$gdTable">
+        <param name="refobject" value="$anchorSector"/>
+        <param name="mingatedistance" value="0"/>
+        <param name="maxgatedistance" value="$maxGateDistance"/>
+        <param name="blacklistgroup" value="$blacklistgroup"/>
+        <param name="returndistancetable" value="true"/>
+        <param name="debugchance" value="$debugchance"/>
+      </run_script>
+
+      <!-- Score each candidate. Skip sectors that don't exist or report zero yield (covers
+           undiscovered sectors and sectors with no resources of this ware). Score is stored
+           NEGATED so a plain ascending sort_list gives us highest-first. -->
+      <set_value name="$scoreTable" exact="table[]"/>
+      <do_for_each in="$gdTable.keys.list" name="$secCand">
+        <do_if value="not @$secCand.exists">
+          <continue/>
+        </do_if>
+        <do_if value="$secCand.isblacklisted.{blacklisttype.sectoractivity}.{$blacklistgroup}.{this.assignedcontrolled} or $secCand.isblacklisted.{blacklisttype.sectortravel}.{$blacklistgroup}.{this.assignedcontrolled}">
+          <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+            text="'    skipping blacklisted sector=' + $secCand.knownname" append="true"/>
+          <continue/>
+        </do_if>
+        <set_value name="$raw" exact="$secCand.yieldrating.{$ware}"/>
+        <do_if value="$raw le 0">
+          <continue/>
+        </do_if>
+        <set_value name="$scoreTable.{$secCand}" exact="(-1.0f) * ($raw / (1.0f + ($gdTable.{$secCand})f * $miningDistanceFactor))"/>
+      </do_for_each>
+      <remove_value name="$gdTable"/>
+
+      <set_value name="$shortlist" exact="$scoreTable.keys.list"/>
+      <sort_list list="$shortlist" sortbyvalue="$scoreTable.{loop.element}"/>
+
+      <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+        text="'  WarehouseFleetMine: ' + $shortlist.count + ' scored sector(s) for ' + $ware + ' (factor=' + $miningDistanceFactor + ', will try up to ' + [$miningSectorRetries, $shortlist.count].min + ')'" append="true"/>
+
+      <!-- Walk the top-scored sectors, randomized floor + relaxed fallback on each.
+           Deliberately find_resource, NOT find_closest_resource: the closest-variant is
+           deterministic for a given start position, so a fleet of miners all launching from the
+           same warehouse converges on the same patch; even the randomized minrating floor does
+           not break that up, because "closest patch above the floor" is still the same patch for
+           everyone. find_resource picks among qualifying patches, which spreads the fleet. -->
+      <set_value name="$foundSector" exact="null"/>
+      <set_value name="$foundPos" exact="null"/>
+      <set_value name="$attempts" exact="0"/>
+      <set_value name="$maxAttempts" exact="[$miningSectorRetries, $shortlist.count].min"/>
+      <do_for_each in="$shortlist" name="$trySector">
+        <do_if value="$attempts ge $maxAttempts">
+          <break/>
+        </do_if>
+        <set_value name="$attempts" operation="add"/>
+
+        <set_value name="$bestRaw" exact="$trySector.yieldrating.{$ware}"/>
+        <set_value name="$R" min="$miningFloorRatioMin" max="$miningFloorRatioMax"/>
+        <set_value name="$floor1" exact="($bestRaw)f * $R"/>
+
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+          text="'    attempt ' + $attempts + '/' + $maxAttempts + ' sector=' + $trySector.knownname + ' score=' + ((-1.0f) * $scoreTable.{$trySector}) + ' raw=' + $bestRaw + ' R=' + $R + ' floor=' + $floor1" append="true"/>
+
+        <find_resource resourcearea="$resourcearea" ware="$ware" sector="$foundSector" position="$foundPos" refobject="$trySector" minrating="$floor1"/>
+
+        <!-- Same-sector fallback: nothing met the random floor; relax it once. -->
+        <do_if value="not @$resourcearea.exists">
+          <set_value name="$floor2" exact="$floor1 * $miningFloorRelaxDiv"/>
+          <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+            text="'      no patch met floor; retrying same sector at lower floor=' + $floor2" append="true"/>
+          <find_resource resourcearea="$resourcearea" ware="$ware" sector="$foundSector" position="$foundPos" refobject="$trySector" minrating="$floor2"/>
+          <remove_value name="$floor2"/>
+        </do_if>
+
+        <remove_value name="$bestRaw"/>
+        <remove_value name="$R"/>
+        <remove_value name="$floor1"/>
+
+        <do_if value="@$resourcearea.exists and @$foundSector">
+          <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+            text="'  WarehouseFleetMine: chose ' + $foundSector.knownname + ' (attempt ' + $attempts + '/' + $maxAttempts + ') for ' + $ware" append="true"/>
+          <break/>
+        </do_if>
+      </do_for_each>
+
+      <!-- Unlucky fallback: no minrating, run against the top-scored sector. Last resort.
+           Here find_closest_resource IS the right tool - unlike the loop above, the goal is no
+           longer spreading ships across patches (there is apparently nothing decent to spread
+           over), but a guaranteed pick of whatever exists, and deterministic-closest maximizes
+           the chance of finding it and minimizes the flight there. -->
+      <do_if value="(not @$resourcearea.exists or not @$foundSector) and $shortlist.count gt 0">
+        <set_value name="$topSec" exact="$shortlist.{1}"/>
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+          text="'    unlucky fallback: no patch found in top ' + $maxAttempts + ' sectors; retrying ' + $topSec.knownname + ' with no minrating'" append="true"/>
+        <create_position name="$searchPos" space="$topSec" value="$topSec.coreposition"/>
+        <find_closest_resource resourcearea="$resourcearea" ware="$ware" sector="$foundSector" position="$foundPos" refobject="$topSec">
+          <refposition value="$searchPos" object="$topSec"/>
+        </find_closest_resource>
+        <remove_value name="$searchPos"/>
+        <remove_value name="$topSec"/>
+      </do_if>
+
+      <remove_value name="$scoreTable"/>
+      <remove_value name="$shortlist"/>
+      <remove_value name="$attempts"/>
+      <remove_value name="$maxAttempts"/>
+      <remove_value name="$miningDistanceFactor"/>
+      <remove_value name="$miningFloorRatioMin"/>
+      <remove_value name="$miningFloorRatioMax"/>
+      <remove_value name="$miningFloorRelaxDiv"/>
+      <remove_value name="$miningSectorRetries"/>
+
+      <do_if value="not @$resourcearea.exists or not @$foundSector">
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+          text="'  WarehouseFleetMine: no resource area found for ' + $ware + ' within ' + $maxGateDistance + ' gate(s) of ' + $anchorSector.knownname + '; aborting'" append="true"/>
+        <!-- Fire MiningResourceNotFound event to make sure miningCooldown is applied -->
+        <signal_objects object="player.entity" param="'WarehouseFleets'" param2="'MiningResourceNotFound'" param3="$cooldownKey"/>
+        <return/>
+      </do_if>
+
+      <!-- Reserve the selected resource area while MiningCollect is running -->
+      <add_yield_reservation reserver="this.assignedcontrolled" resourcearea="$resourcearea"/>
+
+      <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+        text="'[' + player.age + '] WarehouseFleetMine: dispatching MiningCollect for ' + $ware + ' in ' + $foundSector.knownname" append="true"/>
+
+      <create_order name="$miningcollect" object="this.assignedcontrolled" id="'MiningCollect'" immediate="true">
+        <param name="destination" value="[$foundSector, $foundPos]"/>
+        <param name="ware" value="$ware"/>
+        <param name="secwares" value="[]"/>
+        <param name="resourcearea" value="@$resourcearea"/>
+        <param name="internalorder" value="true"/>
+        <param name="debugchance" value="$debugchance"/>
+      </create_order>
+
+      <wait exact="1ms"/>
+
+      <label name="finish"/>
+
+      <do_if value="@$resourcearea.exists">
+        <remove_yield_reservation reserver="this.assignedcontrolled" resourcearea="$resourcearea"/>
+      </do_if>
+
+      <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+        text="'[' + player.age + '] WarehouseFleetMine: reached finish label; cargo-now=' + this.ship.cargo.{$ware}.count + ' ' + $ware + ' (max ' + this.ship.cargo.{$ware}.max + ')'" append="true"/>
+      <return/>
+    </actions>
+  </attention>
+
+  <on_abort>
+    <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'"
+      text="'[' + player.age + '] WarehouseFleetMine: on_abort fired'" append="true"/>
+    <do_if value="not $miningcollect? and @$resourcearea.exists and this.assignedcontrolled">
+      <remove_yield_reservation reserver="this.assignedcontrolled" resourcearea="$resourcearea"/>
+    </do_if>
+  </on_abort>
+</aiscript>
