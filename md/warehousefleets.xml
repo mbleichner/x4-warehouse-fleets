@@ -30,6 +30,10 @@
         <set_value name="global.$WarehouseFleets.$waitInDockL" exact="false" />
         <set_value name="global.$WarehouseFleets.$minCargoUsage" exact="50" />
         <set_value name="global.$WarehouseFleets.$tradeGatePenalty" exact="20" />
+        <set_value name="global.$WarehouseFleets.$prioDistribution" exact="5" />
+        <set_value name="global.$WarehouseFleets.$prioSupply" exact="5" />
+        <set_value name="global.$WarehouseFleets.$prioBuild" exact="7" />
+        <set_value name="global.$WarehouseFleets.$prioTrade" exact="5" />
         <set_value name="global.$WarehouseFleets.$fleetOrganization" exact="1" comment="1 = independent fleets, 2 = subordinates of warehouse" />
       </actions>
 
