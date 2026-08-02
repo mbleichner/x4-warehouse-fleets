@@ -733,7 +733,7 @@
               <do_if value="$transportType == 'trade'">
                 <set_value name="$storageLevelRating" exact="[[if $provider.idcode == $order.$sourceStation.idcode then $providerCargoRatio else (100f - $receiverCargoRatio), 100.0].min, 0.0].max" />
                 <set_value name="$gd" exact="$provider.gatedistance.{$receiver}.{blacklistgroup.civilian}.{$ship}" />
-                <set_value name="$importance" exact="0.5 * ([100f * $profitRatio, 0].max + $storageLevelRating/100.0) * ($order.$tradeGatePenalty/100f) ^ $gd * ($order.$prioTrade/10f)" />
+                <set_value name="$importance" exact="0.5 * ([100f * $profitRatio, 0].max + $storageLevelRating/100.0) * ((100f-$order.$tradeGatePenalty)/100f) ^ $gd * ($order.$prioTrade/10f)" />
               </do_if>
 
               <set_value name="$completesBuildRequest" exact="$transportType == 'build' and $receiverOffer.desiredamount == $amount" />
