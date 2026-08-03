@@ -4,11 +4,12 @@ This mod was inspired by the popular [Mules and Warehouses Mod](https://github.c
 
 It introduces the WarehouseFleet behaviour, which serves the following purposes:
 - Balance cargo levels between warehouses
-- Fetch products from factories
 - Supply factories with resources
+- Fetch products from factories
 - Sell products to NPC factions
-- Fill shortages by buying from NPC factions
 - Supply player-owned build storages
+- Fill shortages by buying from NPC factions
+- Fill raw material shortages by mining
 
 *Releases will be published on Nexus Mods: https://www.nexusmods.com/x4foundations/mods/939*
 
@@ -33,7 +34,7 @@ To make this work, every warehouse gets assigned a "WarehouseFleet", composed of
 | Parameter | Description |
 | --- | --- |
 | Home Warehouse | The home warehouse of this fleet. |
-| Targets | A list of sectors or stations. This should include all connected warehouses, as well as any sectors/stations to trade with. |
+| Targets | A list of sectors or stations, defining the "service area" of the fleet. Ships will only interact with stations contained in the target list. Adding a sector is equivalent to adding all stations of the sector. Mining ships will stay within the sectors defined here. |
 | Targets (L) | Targets that are only allowed for L-sized freighters. Useful for routes through dangerous territory. |
 | Targets (M) | Targets that are only allowed for M-sized cargo ships. |
 | Supply Targets | Target stations that should always get filled to the max and will never provide anything back to the network - useful especially for shipyards. Supply targets also have to be entered in one of the above target settings in order to define which ship class(es) may go there. |
@@ -41,8 +42,10 @@ To make this work, every warehouse gets assigned a "WarehouseFleet", composed of
 | Prio: Trade  | Set to high values to generally favor trading over other tasks. |
 | Prio: Supply | Set to high values to generally favor supply targets (e.g. shipyards) over other tasks. |
 | Prio: Build | Set to high values to generally favor filling build storages over other tasks. |
+| Prio: Mining | Set to high values to generally favor mining trips over other tasks. Only applicable for mining ships (solid or liquid cargo). |
 | Min. Cargo Usage (%) | Avoids scheduling inefficient trips. No ship will be scheduled that uses less than the specified cargo space. Setting this value too low can cause performance degradation. Setting the value too high might prevent/delay balancing of low volume wares. Ships supplying build storages may ignore this setting to avoid build jobs getting stuck with only a few materials left. |
-| Trades: Gate Penalty (%) | Reduces the attractivity of trades in other sectors to keep travel distances short. |
+| Trade Gate Penalty (%) | Reduces the attractivity of trades in other sectors to keep travel distances short. |
+| Mining Gate Penalty (%) | Reduces the attractivity of mining in other sectors to keep travel distances short. |
 
 ## Global Settings
 
@@ -54,6 +57,7 @@ The global settings can be found in the "Extension Options" via the menu.
 | Auto-transfer money | Regularly transfer money from station accounts to the player, if at least 10% above the operating budget of the station |
 | Cargo emptying routine | Sometimes trades can fail, leaving ships with remaining cargo - this can be resolved in different ways. Check the ingame tooltip for available options. |
 | Organize fleets in menu as | "Independent fleets" (default): WarehouseFleet ships will be displayed on the top level of the map/property menus.<br/>"Subordinates of warehouse": fleets will be attached as subordinates under their home warehouses. |
+
 
 ## Warehouses, Trade Wares and Restrictions
 
@@ -78,19 +82,19 @@ If a warehouse has unrestricted sell offers, NPC traders can also buy directly f
 
 ## Notes
 
-- Any ship might carry up to three different resources at once.
+- Any ship might carry up to three different resources at once. Ships sent out to mine will only fetch a single resource.
 - Idle ships will dock at their home warehouse and wait for something to do.
 - Ships will always begin and end their tasks at the home warehouse. A ship will fly back to the warehouse, even if it has nothing to carry and could in theory fly directly to another station. This is intentional, so that the routes are easier to control and protect. If shortcutting was allowed, the pathing could become unpredictable and ships might fly through hostile regions.
 - S class ships will only operate in the local sector. They are generally very inefficient when it comes to longer flights and to cut down on settings, this behavior is hardcoded.
 - Ships will only consider a trade if it is profitable. This means they will only sell a ware if your sell offer is cheaper than the buy offer of an NPC station and they will only buy a ware if your buy offer is higher than the sell offer of an NPC station. Usually, you want to set automatic pricing, so your ships will only buy/sell wares if the offer is profitable considering the current market price.
 - When using the setting "organize fleets in menu as subordinates of warehouse", the fleets get attached to their warehouse, but this is purely a grouping anchor: the ships behave exactly like independent fleets, their settings stay fully editable, and the station never gives them orders.
+- Mining trips that take over 30m will be cancelled to avoid ships getting stuck in depleted ore fields.
 
 ## Recommendations
 
 - Add ships of all sizes (S/M/L) to your fleets, so every transport job can be assigned an appropriate-sized ship.
 - Restrict traffic between warehouses to L-sized ships. This avoids a lot of pirate/xenon trouble.
 - Use the strongest ship of the fleet as commander - if the commander gets killed, you have to redo all of the fleet configuration, because the game doesn't auto-transfer the behavior to another ship of the fleet.
-- Since idle ships dock and stay docked at the warehouse, it is advisable to have more L-docks than L-ships. Otherwise your warehouse might by completely blocked by docked freighters.
 - Check your warehouses from time to time for overworked fleets - if there are no idle ships waiting for work, it might be advisable to add more ships.
 
 ## Some Implementation Details

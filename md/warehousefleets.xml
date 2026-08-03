@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mdscript name="WarehouseFleets" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Nextcloud/X4 Foundations/2026-02-28/libraries/md.xsd">
+<mdscript name="WarehouseFleets" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Repos/x4-game-files/libraries/md.xsd">
   <cues>
     <!-- Startet den Main Cue, falls dieser nicht aktiv sein sollte. Passiert z.B. bei einem Reset durch Versions-Update -->
     <cue name="Initializer" instantiate="true" checkinterval="1">
@@ -11,7 +11,7 @@
       </actions>
     </cue>
 
-    <cue name="Config" version="8">
+    <cue name="Config" version="9">
       <conditions>
         <check_any>
           <event_cue_signalled cue="md.Setup.GameStart" />
@@ -30,10 +30,12 @@
         <set_value name="global.$WarehouseFleets.$waitInDockL" exact="false" />
         <set_value name="global.$WarehouseFleets.$minCargoUsage" exact="50" />
         <set_value name="global.$WarehouseFleets.$tradeGatePenalty" exact="20" />
+        <set_value name="global.$WarehouseFleets.$miningGatePenalty" exact="40" />
         <set_value name="global.$WarehouseFleets.$prioDistribution" exact="5" />
         <set_value name="global.$WarehouseFleets.$prioSupply" exact="5" />
         <set_value name="global.$WarehouseFleets.$prioBuild" exact="7" />
         <set_value name="global.$WarehouseFleets.$prioTrade" exact="5" />
+        <set_value name="global.$WarehouseFleets.$prioMining" exact="4" />
         <set_value name="global.$WarehouseFleets.$fleetOrganization" exact="1" comment="1 = independent fleets, 2 = subordinates of warehouse" />
       </actions>
 
@@ -86,6 +88,15 @@
       <patch sinceversion="8">
         <do_if value="@global.$WarehouseFleets.$fleetOrganization == null">
           <set_value name="global.$WarehouseFleets.$fleetOrganization" exact="1" />
+        </do_if>
+      </patch>
+
+      <patch sinceversion="9">
+        <do_if value="@global.$WarehouseFleets.$prioMining == null">
+          <set_value name="global.$WarehouseFleets.$prioMining" exact="4" />
+        </do_if>
+        <do_if value="@global.$WarehouseFleets.$miningGatePenalty == null">
+          <set_value name="global.$WarehouseFleets.$miningGatePenalty" exact="40" />
         </do_if>
       </patch>
     </cue>
@@ -302,6 +313,47 @@
           </cues>
         </cue>
 
+        <!-- Watches an in-flight mining trip and recalls the ship if it exceeds a 30m threshold; exhausted resource fields could otherwise lock up the ship indefinitely -->
+        <cue name="MiningOpWatcher" instantiate="true" namespace="this">
+          <conditions>
+            <event_cue_signalled />
+          </conditions>
+          <actions>
+            <set_value name="$ship" exact="event.param.$ship" />
+            <set_value name="$mineOrder" exact="event.param.$mineOrder" />
+            <set_value name="$ware" exact="event.param.$ware" />
+            <set_value name="$scheduledAt" exact="player.age" />
+          </actions>
+          <cues>
+            <cue name="MiningOpWatch">
+              <cues>
+                <cue name="MiningOpDone" checkinterval="10" comment="cancels healthchecks once the mining order is gone">
+                  <conditions>
+                    <check_value value="not $ship.exists or not $mineOrder.exists" />
+                  </conditions>
+                  <actions>
+                    <cancel_cue cue="MiningOpWatch" />
+                  </actions>
+                </cue>
+                <cue name="MiningOpHealthCheck" checkinterval="10" instantiate="true" comment="cancels the mining order after 30m to avoid deadlocks">
+                  <!-- An earlier implementation did a check to make sure the ship makes steady progress, but this can lead to cancellations during sector relocations -->
+                  <actions>
+                    <do_if value="player.age gt ($scheduledAt + 1800)">
+                      <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  MiningOpHealthCheck: cancelling order due to timeout'" output="false" append="true" />
+                      <do_for_each in="$ship.orders" name="$order">
+                        <do_if value="$order.id == 'MiningCollect' or $order.id == 'WarehouseFleetMine'">
+                          <cancel_order order="$order" />
+                          <cancel_cue cue="MiningOpWatch" />
+                        </do_if>
+                      </do_for_each>
+                    </do_if>
+                  </actions>
+                </cue>
+              </cues>
+            </cue>
+          </cues>
+        </cue>
+
         <!-- Entfernt regelmäßig alte Deliveries aus der globalen Liste -->
         <cue name="GarbageCollector" checkinterval="30" instantiate="true">
           <actions>
@@ -426,14 +478,63 @@
           <param name="receiver" value="null" />
         </run_actions>
 
-        <do_if value="$bestPushTrip == null and $bestPullTrip == null">
-          <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'No trade found that meets minimum cargo usage requirement'" output="false" append="true" />
+        <run_actions ref="FindMiningTrip" result="$miningRoundtrip">
+          <param name="ship" value="$ship" />
+          <param name="order" value="$order" />
+          <param name="sourceStation" value="$sourceStation" />
+          <param name="deliveries" value="$deliveries" />
+        </run_actions>
+
+        <!-- If no possible trip could be found => abort -->
+        <do_if value="$bestPushTrip == null and $bestPullTrip == null and $miningRoundtrip == null">
+          <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'No possible trades or mining operations found.'" output="false" append="true" />
           <return />
         </do_if>
 
         <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Best Push Trip: ' + $bestPushTrip" output="false" append="true" />
         <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Best Pull Trip: ' + $bestPullTrip" output="false" append="true" />
+        <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Mining Trip: ' + $miningRoundtrip" output="false" append="true" />
 
+        <!-- In case mining has a better rating than both transport trips: create orders for a mining roundtrip -->
+        <do_if value="(@$miningRoundtrip.$rating + 0) gt [@$bestPushTrip.$rating + 0, @$bestPullTrip.$rating + 0].max">
+          <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'Scheduling a mining roundtrip'" output="false" append="true" />
+
+          <set_value name="$ware" exact="$miningRoundtrip.$ware" />
+          <set_value name="$warehouse" exact="$sourceStation" />
+
+          <!-- create the order that mines the resources until cargo hold is full -->
+          <create_order name="$mineOrder" id="'WarehouseFleetMine'" object="$ship">
+            <param name="sourceStation" value="$sourceStation" />
+            <param name="ware" value="$miningRoundtrip.$ware" />
+          </create_order>
+
+          <!-- create the order to sell off all mined resources at the warehouse -->
+          <find_buy_offer buyer="$warehouse" wares="[$ware]" result="$whOffers" tradepartner="$ship" multiple="true" usereservations="true" excludeempty="false" />
+          <set_value name="$dropoffAmount" exact="$ship.cargo.{$ware}.max" />
+          <create_trade_order name="$dropoffOrder" object="$ship" tradeoffer="$whOffers.{1}" amount="$dropoffAmount" />
+
+          <!-- Register delivery object -->
+          <set_value name="$delivery" exact="table[
+            $shipID = $ship.idcode,
+            $timeScheduled = player.age,
+            $timeFinished = null,
+            $wareID = $ware.id,
+            $amount = $dropoffAmount,
+            $providerID = null,
+            $receiverID = $warehouse.idcode,
+            $providerOrder = $mineOrder,
+            $receiverOrder = $dropoffOrder,
+          ]" />
+          <append_to_list name="$deliveries" exact="$delivery" />
+          <debug_to_file chance="100" name="'scheduler'" directory="'WarehouseFleets'" text="'Added delivery: ' + $delivery" output="false" append="true" />
+
+          <!-- Register completion listener as well as a watcher process to recall the mining ship in case it gets stuck -->
+          <signal_cue_instantly cue="UpdateDeliveryOnOrderCompletion" param="table[$ship = $ship, $delivery = $delivery, $order = $delivery.$receiverOrder]" />
+          <signal_cue_instantly cue="MiningOpWatcher" param="table[$ship = $ship, $mineOrder = $mineOrder, $ware = $miningRoundtrip.$ware ]" />
+          <return />
+        </do_if>
+
+        <!-- Mining did not win over transport - figure out the best combination of push + pull trips -->
         <set_value name="$resultPushTrip" exact="null" />
         <set_value name="$resultPullTrip" exact="null" />
 
@@ -924,6 +1025,128 @@
             <write_to_logbook category="upkeep" entity="$warehouse" object="$ship" interaction="showonmap" title="'WarehouseFleet: Cargo Empty Routine ('+$warehouse.idcode+')'" text="$recoveryText" />
           </do_all>
         </do_elseif>
+      </actions>
+    </library>
+
+    <library name="FindMiningTrip" purpose="run_actions" namespace="this">
+      <params>
+        <param name="ship" />
+        <param name="order" />
+        <param name="sourceStation" />
+        <param name="deliveries" />
+      </params>
+      <actions>
+        <!-- prioMining = 0 disables mining entirely -->
+        <do_if value="$order.$prioMining le 0">
+          <return value="null" />
+        </do_if>
+
+        <!-- Find all minable wares this ship can carry (dynamic, so modded resources work) -->
+        <get_ware_definition result="$minableWares" tags="tag.minable" />
+        <set_value name="$eligibleWares" exact="[]" />
+        <do_for_each in="$minableWares" name="$minableWare">
+          <do_if value="$ship.cargo.{$minableWare}.max gt 0">
+            <append_to_list name="$eligibleWares" exact="$minableWare" />
+          </do_if>
+        </do_for_each>
+        <shuffle_list list="$eligibleWares" comment="randomize to avoid all ships doing the same in case of a draw" />
+
+        <!-- Abort if ship can't carry any minable wares -->
+        <do_if value="$eligibleWares.count == 0">
+          <return value="null" />
+        </do_if>
+
+        <!-- Abort if ship needs drones to mine, but has none -->
+        <do_if value="$ship.iscapitalship and ($ship.units.{unitcategory.gascollector}.count + $ship.units.{unitcategory.orecollector}.count) le 0">
+          <return value="null" />
+        </do_if>
+
+        <!-- Score each ware that the warehouse is able to buy and store (in-flight mining ops count as stock) -->
+        <set_value name="$bestMiningTrip" exact="null" />
+        <do_for_each in="$eligibleWares" name="$ware">
+
+          <!-- Skip if the warehouse has no buy offers for this ware -->
+          <find_buy_offer buyer="$sourceStation" wares="[$ware]" result="$buyOffers" tradepartner="$ship" multiple="true" usereservations="false" excludeempty="false" />
+          <do_if value="$buyOffers.count == 0">
+            <continue />
+          </do_if>
+
+          <!-- Count wares that are still inbound on the Warehouse -->
+          <!-- Don't check outbound transports since we try to make a guess if the warehouse will have enough free room once the mining concludes. We can't assume safely that outbound transports will have happenend by then. -->
+          <set_value name="$wareInbound" exact="0" />
+          <do_for_each in="$deliveries" name="$delivery">
+            <do_if value="$delivery.$wareID == $ware.id and $delivery.$receiverID == $sourceStation.idcode and @$delivery.$receiverOrder.exists">
+              <set_value name="$wareInbound" operation="add" exact="$delivery.$amount" />
+            </do_if>
+          </do_for_each>
+
+          <!-- Mining always brings home a full shipload (MiningCollect has no amount limit), so the warehouse must have room for all of it -->
+          <set_value name="$wareCargo" exact="$sourceStation.cargo.{$ware}.count" />
+          <set_value name="$wareTarget" exact="$sourceStation.cargo.{$ware}.target" />
+          <set_value name="$shipMaxUnits" exact="$ship.cargo.{$ware}.max" />
+          <do_if value="($wareTarget - $wareCargo - $wareInbound) lt $shipMaxUnits">
+            <continue />
+          </do_if>
+
+          <!-- Build list of eligible candidate sectors - same logic as for transports, but only consider sectors and ignore station targets -->
+          <!-- THIS PART OF THE CODE IS DUPLICATED IN THE AISCRIPT AND HAS TO LOOK EXACTLY THE SAME OR ELSE THE SCHEDULING ALGORITHM WILL BREAK -->
+          <set_value name="$mineableSectors" exact="[]" />
+          <set_value name="$order" exact="if $ship.defaultorder.id == 'Assist' then $ship.defaultorder.$baseorder else $ship.defaultorder" />
+          <append_list_elements create="true" name="$targets" other="$order.$targets" comment="S mining ships don't exist, so no filtering required here" />
+          <append_list_elements create="true" name="$targets" other="if $ship.isclass.ship_m then $order.$targetsM else []" />
+          <append_list_elements create="true" name="$targets" other="if $ship.iscapitalship  then $order.$targetsL else []" />
+          <do_for_each in="$targets" name="$target">
+            <do_if value="$target.class != class.sector or $target.yieldrating.{$ware} le 0 or $mineableSectors.indexof.{$target} != 0">
+              <continue comment="not a sector containing resource fields or already added" />
+            </do_if>
+            <do_if value="$target.isblacklisted.{blacklisttype.sectoractivity}.{blacklistgroup.civilian}.{$ship} or $target.isblacklisted.{blacklisttype.sectortravel}.{blacklistgroup.civilian}.{$ship}">
+              <continue comment="sector is blacklisted" />
+            </do_if>
+            <find_resource resourcearea="$mineableArea" ware="$ware" sector="$_sector" position="$_position" refobject="$target" />
+            <do_if value="not @$mineableArea">
+              <continue comment="sector has no minable area" />
+            </do_if>
+            <remove_value name="$mineableArea" comment="just to be extra sure we're not leaking into the next iteration" />
+            <append_to_list name="$mineableSectors" exact="$target" />
+          </do_for_each>
+
+          <!-- Abort if there are no possible sectors to mine -->
+          <do_if value="$mineableSectors.count == 0">
+            <continue />
+          </do_if>
+
+          <!-- Importance = same as distribution with a full provider -->
+          <!-- Ignore reservations here - they generally only make sense to avoid distribution ping-pong, but are  -->
+          <set_value name="$wareCargoRatio" exact="[[100.0 * $wareCargo / $wareTarget, 100.0].min, 0.0].max" />
+          <set_value name="$importance" exact="(100.0 - $wareCargoRatio) * (1.0 - $wareCargoRatio/200.0) * ($order.$prioMining/10f)" />
+          <set_value name="$rating" exact="$importance * $shipMaxUnits * $ware.volume" />
+
+          <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'"
+            text="'  [mining ' + $ware + '] '
+              + 'importance = ' + '%.3s'.[$importance]
+              + ', rating = ' + '%.3s'.[$rating]
+              + ', wareCargoRatio = ' + '%.1s'.[$wareCargoRatio] + '%'
+              + ', wareCargo = ' + $wareCargo
+              + ', wareInbound = ' + $wareInbound
+              + ', wareTarget = ' + $wareTarget
+              + ', amount = ' + $shipMaxUnits
+            " output="false" append="true" />
+
+          <do_if value="$importance le 0 or $rating le 0">
+            <continue />
+          </do_if>
+
+          <do_if value="$bestMiningTrip == null or $rating gt $bestMiningTrip.$rating">
+            <set_value name="$bestMiningTrip" exact="table[
+              $ware = $ware,
+              $amount = $shipMaxUnits,
+              $importance = $importance,
+              $rating = $rating,
+            ]" />
+          </do_if>
+        </do_for_each>
+
+        <return value="$bestMiningTrip" />
       </actions>
     </library>
 

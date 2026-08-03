@@ -75,8 +75,12 @@
         <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'minCargoUsage']" />
         <signal_cue_instantly cue="AddEmptyRow" />
 
-        <signal_cue_instantly cue="AddSliderRow" param="table[ $id = 'tradeGatePenalty', $min = 0, $max = 90, $suffix = '%', $default = 20, $text = 'Trade: Gate Penalty (%)', $mouseOverText = 'Reduces the attractivity of trades in other sectors to keep travel distances short' ]" />
+        <signal_cue_instantly cue="AddSliderRow" param="table[ $id = 'tradeGatePenalty', $min = 0, $max = 90, $suffix = '%', $default = 20, $text = 'Trade Gate Penalty (%)', $mouseOverText = 'Reduces the attractivity of trades in other sectors to keep travel distances short' ]" />
         <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'tradeGatePenalty']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddSliderRow" param="table[ $id = 'miningGatePenalty', $min = 0, $max = 90, $suffix = '%', $default = 20, $text = 'Mining Gate Penalty (%)', $mouseOverText = 'Reduces the attractivity of mining operations in other sectors to keep travel distances short' ]" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'miningGatePenalty']" />
         <signal_cue_instantly cue="AddEmptyRow" />
 
         <signal_cue_instantly cue="AddSliderRow" param="table[$id = 'prioDistribution', $min = 0, $max = 10, $suffix = '', $default = 5, $text = 'Prio: Distribute', $mouseOverText = 'Priority of ware distribution jobs']" />
@@ -93,6 +97,10 @@
 
         <signal_cue_instantly cue="AddSliderRow" param="table[$id = 'prioBuild', $min = 0, $max = 10, $suffix = '', $default = 7, $text = 'Prio: Build', $mouseOverText = 'Priority of jobs supplying player-owned build storages']" />
         <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'prioBuild']" />
+        <signal_cue_instantly cue="AddEmptyRow" />
+
+        <signal_cue_instantly cue="AddSliderRow" param="table[$id = 'prioMining', $min = 0, $max = 10, $suffix = '', $default = 4, $text = 'Prio: Mining', $mouseOverText = 'Priority of mining trips for mining-capable ships']" />
+        <signal_cue_instantly cue="AddSyncButtonRow" param="table[$id = 'prioMining']" />
         <signal_cue_instantly cue="AddEmptyRow" />
 
         <signal_cue_instantly cue="AddCheckboxRow" param="table[$id = 'waitInDockS', $default = true, $text = 'Dock idle S-sized ships', $mouseOverText = 'S-sized ships should dock at their home warehouse while waiting for new delivery jobs']" />

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aiscript name="order.warehousefleet.mining" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Repos/x4-game-files/aiscripts/aiscripts.xsd" version="1">
+
+  <!--
+    One-shot mining order dispatched by the WarehouseFleet scheduler when a mining trip wins the
+    importance/rating competition (see prioMining and FindMiningTrip in md/warehousefleets.xml).
+
+    Why this exists: vanilla MiningRoutine is an infinite loop (mine -> sell -> mine -> ...).
+    Even with maxsell=0 and a duration cap, the inner AutoMine sub-order keeps the ship cycling,
+    which conflicts with the WarehouseFleet delivery flow (sell to the home warehouse, let the
+    next scheduling round decide the next task for the ship).
+  -->
+
+  <order id="WarehouseFleetMine" name="WarehouseFleet Mining" description="One-shot mining trip for the WarehouseFleet behaviour." category="internal" allowinloop="false">
+    <params>
+      <param name="sourceStation" required="true" type="internal" text="Home Warehouse" default="null">
+        <input_param name="class" value="[class.station]" />
+        <input_param name="owner" value="this.ship.trueowner" />
+      </param>
+      <param name="ware" required="true" type="internal" text="Ware to mine" comment="The single ware to gather. Picked by FindMiningTrip in the MD scheduler." default="null">
+        <input_param name="cancarry" value="this.ship" />
+        <input_param name="isminable" value="true" />
+      </param>
+      <param name="debugchance" default="0" type="internal" text="Debug chance" comment="needed to avoid error messages when interrupts trigger during the run_script part" />
+    </params>
+    <requires primarypurpose="purpose.mine" />
+    <location condition="false" object="$sourceStation" comment="condition=false suppresses the map marker entirely" />
+  </order>
+
+  <interrupts>
+    <handler ref="SectorChangeHandler" />
+    <handler ref="AttackHandler" />
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler" />
+    <handler ref="InspectedHandler" />
+    <handler ref="FoundAbandonedHandler" />
+    <handler ref="FoundLockboxHandler" />
+    <handler ref="ResupplyHandler" />
+    <handler ref="TargetInvalidHandler" />
+    <handler ref="TideHandler" />
+  </interrupts>
+
+  <init>
+    <set_command command="command.mining" param="@$sourceStation.sector" />
+  </init>
+
+  <attention min="unknown">
+    <actions>
+      <label name="start" />
+      <set_value name="$ship" exact="this.ship" />
+      <set_value name="$targetArea" exact="null" />
+
+      <!-- Bail out cleanly if our inputs are gone -->
+      <do_if value="not @$sourceStation.sector.exists or not @$ware">
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'  WarehouseFleetMine: anchor sector or ware invalid; aborting'" append="true" />
+        <return />
+      </do_if>
+
+      <!-- The ship must actually be able to carry this ware -->
+      <do_if value="not this.ship.cargo.{$ware}.max">
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'  WarehouseFleetMine: ship cannot carry ' + $ware + '; aborting'" append="true" />
+        <return />
+      </do_if>
+
+      <!-- End job if cargo is full (with 5% tolerance to avoid relocating just top top off a minuscle amount) -->
+      <do_if value="(this.ship.cargo.{$ware}.free * 20) lt this.ship.cargo.{$ware}.max"> <!-- Integer-safe form: free*20 < max  <=>  free < max*0.05. -->
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'  WarehouseFleetMine: ship effectively full, ending mining routine'" append="true" />
+        <return />
+      </do_if>
+
+      <!-- If we already have mined some resources, try to continue mining in the current sector -->
+      <do_if value="$ship.cargo.{$ware}.count gt 0">
+        <set_value name="$sector" exact="$ship.sector" />
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'  WarehouseFleetMine: trying to stay in sector ' + $sector.knownname" append="true" />
+        <find_resource resourcearea="$targetArea" ware="$ware" sector="$targetSector" position="$targetPosition" refobject="$sector" />
+      </do_if>
+
+      <!-- Otherwise, choose a randomized sector, but prefer sectors with high scores -->
+      <do_if value="not @$targetArea">
+
+        <!-- Build list of eligible candidate sectors - same logic as for transports, but only consider sectors and ignore station targets -->
+        <!-- THIS PART OF THE CODE IS DUPLICATED IN THE MDSCRIPT AND HAS TO LOOK EXACTLY THE SAME OR ELSE THE SCHEDULING ALGORITHM WILL BREAK -->
+        <set_value name="$mineableSectors" exact="[]" />
+        <set_value name="$order" exact="if $ship.defaultorder.id == 'Assist' then $ship.defaultorder.$baseorder else $ship.defaultorder" />
+        <append_list_elements create="true" name="$targets" other="$order.$targets" comment="S mining ships don't exist, so no filtering required here" />
+        <append_list_elements create="true" name="$targets" other="if $ship.isclass.ship_m then $order.$targetsM else []" />
+        <append_list_elements create="true" name="$targets" other="if $ship.iscapitalship  then $order.$targetsL else []" />
+        <do_for_each in="$targets" name="$target">
+          <do_if value="$target.class != class.sector or $target.yieldrating.{$ware} le 0 or $mineableSectors.indexof.{$target} != 0">
+            <continue comment="not a sector containing resource fields or already added" />
+          </do_if>
+          <do_if value="$target.isblacklisted.{blacklisttype.sectoractivity}.{blacklistgroup.civilian}.{$ship} or $target.isblacklisted.{blacklisttype.sectortravel}.{blacklistgroup.civilian}.{$ship}">
+            <continue comment="sector is blacklisted" />
+          </do_if>
+          <find_resource resourcearea="$mineableArea" ware="$ware" sector="$_sector" position="$_position" refobject="$target" />
+          <do_if value="not @$mineableArea">
+            <continue comment="sector has no minable area" />
+          </do_if>
+          <remove_value name="$mineableArea" comment="just to be extra sure we're not leaking into the next iteration" />
+          <append_to_list name="$mineableSectors" exact="$target" />
+        </do_for_each>
+
+        <!-- Score each candidate according to expected yield and distance to the ship -->
+        <set_value name="$scoreTable" exact="table[]" />
+        <do_for_each in="$mineableSectors" name="$sector">
+          <set_value name="$gd" exact="$ship.gatedistance.{$sector}.{blacklistgroup.civilian}.{$ship}" comment="calculate from current ship position to avoid lengthy relocations" />
+          <set_value name="$scoreTable.{$sector}" exact="($sector.yieldrating.{$ware})f * ((100f-$order.$miningGatePenalty)/100f) ^ $gd" />
+          <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'  WarehouseFleetMine: candidate sector = ' + $sector.knownname + ', score = ' + $scoreTable.{$sector} + ', yield = ' + $sector.yieldrating.{$ware} + ', gd = ' + $gd" append="true" />
+        </do_for_each>
+        <set_value name="$scoreList" exact="$scoreTable.keys.list" />
+        <sort_list list="$scoreList" sortbyvalue="$scoreTable.{loop.element}" sortdescending="true" />
+
+        <!-- Roll a random number and chose the sector based on it (high scoring sectors have a higher chance of getting chosen) -->
+        <set_value name="$scoreSum" exact="0.0" />
+        <do_for_each in="$scoreList" name="$sector">
+          <set_value name="$scoreSum" operation="add" exact="$scoreTable.{$sector}" />
+        </do_for_each>
+        <set_value name="$randomScore" min="0.0" max="$scoreSum" />
+        <set_value name="$x" exact="0.0" />
+        <do_for_each in="$scoreList" name="$sector">
+          <set_value name="$x" operation="add" exact="$scoreTable.{$sector}" />
+          <do_if value="$randomScore le $x ">
+            <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'  WarehouseFleetMine: chose sector = ' + $sector.knownname + ' (random roll = ' + $randomScore + ')'" append="true" />
+            <find_resource resourcearea="$targetArea" ware="$ware" sector="$targetSector" position="$targetPosition" refobject="$sector" />
+            <break />
+          </do_if>
+        </do_for_each>
+      </do_if>
+
+      <!-- Failed to find minable resources - let the order fail and quit. The scheduler will avoid rescheduling the same ware by checking the same conditions as this aiscript. -->
+      <do_if value="not @$targetArea">
+        <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'  WarehouseFleetMine: no resource area found for ' + $ware + '; aborting'" append="true" />
+        <return />
+      </do_if>
+
+      <!-- Create order to collect resources and run it immediately. The MiningCollect order can end randomly when the local area has been mined completely. -->
+      <!-- Once finished (resources drained or cargo full), the current WarehouseFleetMine order starts over over from the start and decides what to do next. -->
+      <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'  WarehouseFleetMine: dispatching MiningCollect for ' + $ware + ' in ' + $targetSector.knownname" append="true" />
+      <add_yield_reservation reserver="this.assignedcontrolled" resourcearea="$targetArea" />
+      <create_order name="$collectOrder" object="this.assignedcontrolled" id="'MiningCollect'" immediate="true">
+        <param name="destination" value="[$targetSector, $targetPosition]" />
+        <param name="ware" value="$ware" />
+        <param name="secwares" value="[]" />
+        <param name="resourcearea" value="@$targetArea" />
+        <param name="internalorder" value="true" />
+        <param name="debugchance" value="$debugchance" />
+      </create_order>
+
+      <label name="finish" />
+    </actions>
+  </attention>
+
+  <on_abort><!-- will also get run whenever the child order terminates -->
+    <debug_to_file chance="100" name="this.ship.idcode" directory="'WarehouseFleets'" text="'  WarehouseFleetMine: on_abort fired'" append="true" />
+    <do_if value="not $collectOrder? and @$targetArea.exists and this.assignedcontrolled">
+      <remove_yield_reservation reserver="this.assignedcontrolled" resourcearea="$targetArea" />
+    </do_if>
+  </on_abort>
+
+</aiscript>

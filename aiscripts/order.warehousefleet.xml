@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Repos/x4-game-files/aiscripts/aiscripts.xsd" version="45">
+<aiscript name="WarehouseFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/home/manuel/Repos/x4-game-files/aiscripts/aiscripts.xsd" version="46">
 
   <order id="WarehouseFleet" name="WarehouseFleet" description="Warehouse Fleet" category="trade" infinite="true">
     <params>
@@ -44,6 +44,12 @@
         <input_param name="max" value="10" />
         <patch sinceversion="42" value="7" />
       </param>
+      <param name="prioMining" default="global.$WarehouseFleets.$prioMining" type="number" text="Prio: Mining">
+        <input_param name="min" value="0" />
+        <input_param name="max" value="10" />
+        <patch sinceversion="46" value="global.$WarehouseFleets.$prioMining" />
+      </param>
+
       <param name="minCargoUsage" default="global.$WarehouseFleets.$minCargoUsage" type="number" text="Min. Cargo Usage (%)">
         <input_param name="min" value="0" />
         <input_param name="max" value="90" />
@@ -52,6 +58,11 @@
       <param name="tradeGatePenalty" default="global.$WarehouseFleets.$tradeGatePenalty" type="number" text="Trade Gate Penalty (%)">
         <input_param name="min" value="0" />
         <input_param name="max" value="90" />
+      </param>
+      <param name="miningGatePenalty" default="global.$WarehouseFleets.$miningGatePenalty" type="number" text="Mining Gate Penalty (%)">
+        <input_param name="min" value="0" />
+        <input_param name="max" value="90" />
+        <patch sinceversion="46" value="global.$WarehouseFleets.$miningGatePenalty" />
       </param>
       <param name="waitInDockS" type="bool" default="global.$WarehouseFleets.$waitInDockS" text="Dock idle S-sized ships">
         <patch sinceversion="43" value="global.$WarehouseFleets.$waitInDockS" />

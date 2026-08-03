@@ -6,4 +6,7 @@
   <add sel="/icons">
     <icon name="order_warehousefleetreturn" texture="assets\textures\ui\order\order_movetoobject.tga" height="32" width="32"></icon>
   </add>
+  <add sel="/icons">
+    <icon name="order_warehousefleetmine" texture="assets\textures\ui\order\order_miningroutine.tga" height="32" width="32"></icon>
+  </add>
 </diff>
