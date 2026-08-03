@@ -356,37 +356,27 @@
           </run_actions>
         </do_if>
 
-        <!-- Target Stations ermitteln (als Targets können auch Sektoren angegeben werden) -->
+        <!-- Alle Targets sammeln, die für dieses Schiff gelten -->
+        <append_list_elements create="true" name="$targets" other="$order.$targets" />
+        <append_list_elements create="true" name="$targets" other="if $ship.isclass.ship_m then $order.$targetsM else []" />
+        <append_list_elements create="true" name="$targets" other="if $ship.iscapitalship  then $order.$targetsL else []" />
+
+        <!-- Target Stations ermitteln (Mapping Sectoren => Stationen) -->
         <create_list name="$targetStations" />
-        <do_if value="$ship.isclass.ship_s" comment="S-Schiffe werden aktuell nur im lokalen Sektor eingesetzt, für weitere Flüge sind sie i.d.R. zu ineffizient">
-          <run_actions ref="AddStations">
-            <param name="stations" value="$targetStations" />
-            <param name="newTargets" value="[$order.$sourceStation.sector]" />
-            <param name="ship" value="$ship" />
-          </run_actions>
-        </do_if>
-        <do_if value="$ship.isclass.ship_m or $ship.isclass.ship_l or $ship.isclass.ship_xl">
-          <run_actions ref="AddStations">
-            <param name="stations" value="$targetStations" />
-            <param name="newTargets" value="$order.$targets" />
-            <param name="ship" value="$ship" />
-          </run_actions>
-        </do_if>
-        <do_if value="$ship.isclass.ship_m">
-          <run_actions ref="AddStations">
-            <param name="stations" value="$targetStations" />
-            <param name="newTargets" value="$order.$targetsM" />
-            <param name="ship" value="$ship" />
-          </run_actions>
-        </do_if>
-        <do_if value="$ship.isclass.ship_l or $ship.isclass.ship_xl">
-          <run_actions ref="AddStations">
-            <param name="stations" value="$targetStations" />
-            <param name="newTargets" value="$order.$targetsL" />
-            <param name="ship" value="$ship" />
-          </run_actions>
-        </do_if>
+        <run_actions ref="AddStations">
+          <param name="stations" value="$targetStations" />
+          <param name="newTargets" value="$targets" />
+          <param name="ship" value="$ship" />
+        </run_actions>
+
+        <!-- Warehouse aus Liste entfernen (ist kein valides Target) -->
+        <!-- Bei S-Schiffen: Targets außerhalb des lokalen Sektors entfernen (für weitere Flüge sind sie i.d.R. zu ineffizient) -->
         <remove_from_list name="$targetStations" exact="$sourceStation" />
+        <do_for_each in="$targetStations" name="$station">
+          <do_if value="$ship.isclass.ship_s and $station.sector != $sourceStation.sector">
+            <remove_from_list name="$targetStations" exact="$station" />
+          </do_if>
+        </do_for_each>
 
         <!-- Warenliste für Push-Trades erstellen -->
         <find_sell_offer seller="$sourceStation" result="$sellOffers" tradepartner="$ship" multiple="true" usereservations="false" excludeempty="true" />
@@ -538,7 +528,7 @@
 
         <!-- Wenn der Roundtrip nicht an der Home-Station endet => Rückflug-Order erzeugen -->
         <do_if value="$resultPullTrip == null">
-          <create_order object="$ship" id="'ReturnToWarehouse'">
+          <create_order object="$ship" id="'WarehouseFleetReturn'">
             <param name="destination" value="$sourceStation" />
           </create_order>
         </do_if>
