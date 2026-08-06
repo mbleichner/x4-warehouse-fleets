@@ -358,11 +358,12 @@
         <cue name="GarbageCollector" checkinterval="30" instantiate="true">
           <actions>
             <set_value name="$deliveries" exact="parent.$deliveries" />
-            <do_for_each in="$deliveries" name="$delivery">
+            <do_all exact="$deliveries.count" counter="$idx" reverse="true">
+              <set_value name="$delivery" exact="$deliveries.{$idx}" />
               <do_if value="$delivery.$timeFinished != null and $delivery.$timeFinished lt (player.age - 900) or $delivery.$timeScheduled lt (player.age - 1800)" comment="Annahme: jeder Flug ist nach spätestens 30min abgeschlossen">
-                <remove_from_list name="$deliveries" exact="$delivery" />
+                <remove_value name="$deliveries.{$idx}" comment="remove by index since remove by value seems to be unreliable" />
               </do_if>
-            </do_for_each>
+            </do_all>
             <debug_to_file chance="100" name="'garbage-collector'" directory="'WarehouseFleets'" text="$deliveries.count + ' Deliveries:'" output="false" append="false" />
             <do_for_each in="$deliveries" name="$delivery">
               <debug_to_file chance="100" name="'garbage-collector'" directory="'WarehouseFleets'" text="$delivery" output="false" append="true" />
@@ -423,12 +424,12 @@
 
         <!-- Warehouse aus Liste entfernen (ist kein valides Target) -->
         <!-- Bei S-Schiffen: Targets außerhalb des lokalen Sektors entfernen (für weitere Flüge sind sie i.d.R. zu ineffizient) -->
-        <remove_from_list name="$targetStations" exact="$sourceStation" />
-        <do_for_each in="$targetStations" name="$station">
-          <do_if value="$ship.isclass.ship_s and $station.sector != $sourceStation.sector">
-            <remove_from_list name="$targetStations" exact="$station" />
+        <do_all exact="$targetStations.count" counter="$idx" reverse="true">
+          <set_value name="$station" exact="$targetStations.{$idx}" />
+          <do_if value="$station == $sourceStation or ($ship.isclass.ship_s and $station.sector != $sourceStation.sector)">
+            <remove_value name="$targetStations.{$idx}" comment="remove by index since remove by value seems to be unreliable" />
           </do_if>
-        </do_for_each>
+        </do_all>
 
         <!-- Warenliste für Push-Trades erstellen -->
         <find_sell_offer seller="$sourceStation" result="$sellOffers" tradepartner="$ship" multiple="true" usereservations="false" excludeempty="true" />
