@@ -35,8 +35,8 @@ To make this work, every warehouse gets assigned a "WarehouseFleet", composed of
 | --- | --- |
 | Home Warehouse | The home warehouse of this fleet. |
 | Targets | A list of sectors or stations, defining the "service area" of the fleet. Ships will only interact with stations contained in the target list. Adding a sector is equivalent to adding all stations of the sector. Mining ships will stay within the sectors defined here. |
-| Targets (L) | Targets that are only allowed for L-sized freighters. Useful for routes through dangerous territory. |
-| Targets (M) | Targets that are only allowed for M-sized cargo ships. |
+| Targets (L) | Targets that are only allowed for L and XL sized ships. Useful for routes through dangerous territory. |
+| Targets (M) | Targets that are only allowed for M sized ships. |
 | Supply Targets | Target stations that should always get filled to the max and will never provide anything back to the network - useful especially for shipyards. Supply targets also have to be entered in one of the above target settings in order to define which ship class(es) may go there. |
 | Prio: Distribute | Set to high values to generally favor ware distribution over other tasks. |
 | Prio: Trade  | Set to high values to generally favor trading over other tasks. |
@@ -78,7 +78,7 @@ Be cautious with unrestricted buy offers. Those can drain your account. Use the 
 
 The player-owned stations don't need any budgets for this mod to work. All trades with NPC factions use the global player account. (I tried to make it work with station accounts, but unfortunately this isn't possible without commander-assignment and this in turn locks the fleet settings so they cannot be changed afterwards - which would be a huge drawback).
 
-If a warehouse has unrestricted sell offers, NPC traders can also buy directly from your warehouse. If this happens, the money goes to the station account. If the station account reaches 200k, it will be transferred to the player account. If needed, this could be made configurable in a future version.
+If a warehouse has unrestricted sell offers, NPC traders can also buy directly from your warehouse. If this happens, the money goes to the station account. If the station account goes over the operating budget, the surplus will be transferred to the player account.
 
 ## Notes
 
