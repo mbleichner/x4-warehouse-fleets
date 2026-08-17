@@ -610,9 +610,8 @@
                 </create_order>
 
                 <!-- create the order to sell off all mined resources at the warehouse -->
-                <find_buy_offer buyer="$warehouse" wares="[$ware]" result="$whOffers" tradepartner="$ship" multiple="true" usereservations="true" excludeempty="false" />
                 <set_value name="$dropoffAmount" exact="$ship.cargo.{$ware}.max" />
-                <create_trade_order name="$dropoffOrder" object="$ship" tradeoffer="$whOffers.{1}" amount="$dropoffAmount" />
+                <create_trade_order name="$dropoffOrder" object="$ship" tradeoffer="$miningRoundtrip.$receiverOffer" amount="$dropoffAmount" />
 
                 <!-- Register delivery object -->
                 <set_value name="$delivery" exact="table[
@@ -1189,17 +1188,17 @@
         <set_value name="$bestMiningTrip" exact="null" />
         <do_for_each in="$eligibleWares" name="$ware">
 
-          <!-- Skip if the warehouse has no buy offers for this ware -->
-          <find_buy_offer buyer="$sourceStation" wares="[$ware]" result="$buyOffers" tradepartner="$ship" multiple="true" usereservations="true" excludeempty="false" />
-          <do_if value="$buyOffers.count == 0">
-            <continue />
-          </do_if>
-
           <!-- Mining always brings home a full shipload (MiningCollect has no amount limit), so the warehouse must have room for all of it -->
           <set_value name="$wareCargo" exact="$sourceStation.cargo.{$ware}.count" />
           <set_value name="$wareTarget" exact="$sourceStation.cargo.{$ware}.target" />
           <set_value name="$shipMaxUnits" exact="$ship.cargo.{$ware}.max" />
-          <do_if value="($wareTarget - $wareCargo) lt $shipMaxUnits">
+          <do_if value="$wareCargo + $shipMaxUnits gt $wareTarget">
+            <continue />
+          </do_if>
+
+          <!-- Skip if the warehouse has no buy offers for this ware -->
+          <find_buy_offer buyer="$sourceStation" wares="[$ware]" result="$buyOffers" tradepartner="$ship" multiple="true" usereservations="true" excludeempty="false" />
+          <do_if value="$buyOffers.count == 0">
             <continue />
           </do_if>
 
@@ -1260,6 +1259,7 @@
               $ware = $ware,
               $amount = $shipMaxUnits,
               $importance = $importance,
+              $receiverOffer = $buyOffers.{1},
               $rating = $rating,
             ]" />
           </do_if>
