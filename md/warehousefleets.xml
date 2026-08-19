@@ -316,9 +316,9 @@
           </actions>
 
           <cues>
-            <cue name="SchedulerKillswitch" checkinterval="3" comment="fallback in case the scheduling process somehow gets stuck and never terminates">
+            <cue name="SchedulerKillswitch" checkinterval="10" comment="fallback in case the scheduling process somehow gets stuck and never terminates">
               <conditions>
-                <check_value value="player.age gt $startTime + 3" />
+                <check_value value="player.age gt $startTime + 30" comment="SETA and alt-tabbing messes with the randomized delays, so this needs to be a lot bigger than you would assume"/>
               </conditions>
               <actions>
                 <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'killing scheduling run'" />
