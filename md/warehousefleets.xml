@@ -293,7 +293,7 @@
             <set_value name="$sourceStation" exact="$order.$sourceStation" />
             <set_value name="$cargo" exact="$ship.cargo.list" />
             <set_value name="$deliveries" exact="parent.$deliveries" />
-            <set_value name="$targetStations" />
+            <set_value name="$tradeTargets" />
             <set_value name="$pullWares" />
             <set_value name="$pushWares" />
             <set_value name="$reservations" exact="parent.$reservations" />
@@ -318,7 +318,7 @@
           <cues>
             <cue name="SchedulerKillswitch" checkinterval="10" comment="fallback in case the scheduling process somehow gets stuck and never terminates">
               <conditions>
-                <check_value value="player.age gt $startTime + 30" comment="SETA and alt-tabbing messes with the randomized delays, so this needs to be a lot bigger than you would assume"/>
+                <check_value value="player.age gt $startTime + 30" comment="SETA and alt-tabbing messes with the randomized delays, so this needs to be a lot bigger than you would assume" />
               </conditions>
               <actions>
                 <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'killing scheduling run'" />
@@ -346,7 +346,7 @@
               </actions>
             </cue>
 
-            <cue name="SchedulerCalcTargetStations">
+            <cue name="SchedulerCalcTradeTargets">
               <conditions>
                 <event_cue_completed cue="SchedulerPreparation" />
               </conditions>
@@ -358,19 +358,19 @@
                 <append_list_elements create="true" name="$targets" other="if $ship.iscapitalship  then $order.$targetsL else []" />
 
                 <!-- Target Stations ermitteln (Mapping Sectoren => Stationen) -->
-                <create_list name="$targetStations" />
-                <run_actions ref="AddStations">
-                  <param name="stations" value="$targetStations" />
+                <create_list name="$tradeTargets" />
+                <run_actions ref="AddTradeTargets">
+                  <param name="stations" value="$tradeTargets" />
                   <param name="newTargets" value="$targets" />
                   <param name="ship" value="$ship" />
                 </run_actions>
 
                 <!-- Warehouse aus Liste entfernen (ist kein valides Target) -->
                 <!-- Bei S-Schiffen: Targets außerhalb des lokalen Sektors entfernen (für weitere Flüge sind sie i.d.R. zu ineffizient) -->
-                <do_all exact="$targetStations.count" counter="$idx" reverse="true">
-                  <set_value name="$station" exact="$targetStations.{$idx}" />
+                <do_all exact="$tradeTargets.count" counter="$idx" reverse="true">
+                  <set_value name="$station" exact="$tradeTargets.{$idx}" />
                   <do_if value="$station == $sourceStation or ($ship.isclass.ship_s and $station.sector != $sourceStation.sector)">
-                    <remove_value name="$targetStations.{$idx}" comment="remove by index since remove by value seems to be unreliable" />
+                    <remove_value name="$tradeTargets.{$idx}" comment="remove by index since remove by value seems to be unreliable" />
                   </do_if>
                 </do_all>
               </actions>
@@ -378,7 +378,7 @@
 
             <cue name="SchedulerCalcWares">
               <conditions>
-                <event_cue_completed cue="SchedulerCalcTargetStations" />
+                <event_cue_completed cue="SchedulerCalcTradeTargets" />
               </conditions>
               <delay min="0.02s" max="0.08s" />
               <actions>
@@ -452,7 +452,7 @@
                   <param name="ship" value="$ship" />
                   <param name="order" value="$order" />
                   <param name="providers" value="[$sourceStation]" />
-                  <param name="receivers" value="$targetStations" />
+                  <param name="receivers" value="$tradeTargets" />
                   <param name="tradewares" value="$pushWares" />
                   <param name="reservations" value="$reservations" />
                   <param name="backpressure" value="$backpressure" />
@@ -470,7 +470,7 @@
                 <run_actions ref="FindPossibleTransports" result="$pullTransports">
                   <param name="ship" value="$ship" />
                   <param name="order" value="$order" />
-                  <param name="providers" value="$targetStations" />
+                  <param name="providers" value="$tradeTargets" />
                   <param name="receivers" value="[$sourceStation]" />
                   <param name="tradewares" value="$pullWares" />
                   <param name="reservations" value="$reservations" />
@@ -800,6 +800,9 @@
           <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  Provider: ' + $provider.knownname + ' ('+$provider.idcode+')'" />
           <set_value name="$wares" exact="if $provider.trueowner == faction.player then $allwares else $tradewares" />
           <do_if value="$wares.count gt 0">
+            <do_if value="$provider.issupplyship? and $provider.isplayerowned">
+              <set_tradeoffers_enabled object="$provider" enabled="true" comment="enable tradeoffers for supply ships" />
+            </do_if>
             <find_sell_offer seller="$provider" result="$offers" multiple="true" usereservations="true" wares="$wares" tradepartner="$ship">
               <match_seller>
                 <match_use_blacklist object="$ship" group="blacklistgroup.civilian" type="blacklisttype.objectactivity" />
@@ -818,6 +821,9 @@
           <debug_to_file chance="100" name="$ship.idcode" directory="'WarehouseFleets'" text="'  Receiver: ' + $receiver.knownname + ' ('+$receiver.idcode+')'" />
           <set_value name="$wares" exact="if $receiver.trueowner == faction.player then $allwares else $tradewares" />
           <do_if value="$wares.count gt 0">
+            <do_if value="$receiver.issupplyship? and $receiver.isplayerowned">
+              <set_tradeoffers_enabled object="$receiver" enabled="true" comment="enable tradeoffers for supply ships" />
+            </do_if>
             <find_buy_offer buyer="$receiver" result="$offers" multiple="true" usereservations="true" wares="$wares" tradepartner="$ship" excludeempty="false" comment="excludeempty, da Warehouses ohne Budget sonst nichts ankaufen können">
               <match_buyer>
                 <match_use_blacklist object="$ship" group="blacklistgroup.civilian" type="blacklisttype.objectactivity" />
@@ -1269,7 +1275,7 @@
       </actions>
     </library>
 
-    <library name="AddStations" purpose="run_actions" namespace="this">
+    <library name="AddTradeTargets" purpose="run_actions" namespace="this">
       <params>
         <param name="stations" />
         <param name="newTargets" comment="Targets vom Typ station oder sector" />
@@ -1308,6 +1314,11 @@
               </do_if>
             </do_for_each>
 
+          </do_if>
+
+          <!-- Add ship in case it's a supply ship -->
+          <do_if value="$target.issupplyship?">
+            <append_to_list name="$stations" exact="$target" />
           </do_if>
 
           <!-- Station einfügen -->
